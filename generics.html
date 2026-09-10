@@ -601,8 +601,8 @@ String text = stringBox.getValue(); // ClassCastException</pre>
         <button onclick="toggleSolution('solution6')">Lösung anzeigen</button>
         <div id="solution6" class="solution">
             <p>
-                <strong>a)</strong> <code>new T()</code> ist nicht erlaubt, weil Java zur
-                Laufzeit nicht weiß, welcher konkrete Typ hinter <code>T</code> steckt.
+                <strong>a)</strong> <code>new T()</code> ist nicht erlaubt, weil der Compiler nicht weiß, welcher konkrete Konstruktor 
+                für T aufgerufen werden soll. Durch Type Erasure steht der konkrete Typparameter außerdem zur Laufzeit nicht zur Verfügung. <code>T</code> steckt.
             </p>
 
             <pre class="copyable">// Compilerfehler:
@@ -679,12 +679,11 @@ System.out.println(doubleBox.intValue());</pre>
         <button onclick="toggleSolution('solution8')">Lösung anzeigen</button>
         <div id="solution8" class="solution">
             <p>
-                Weil <code>? extends Number</code> verwendet wird, weiß der Compiler
-                nicht, ob beide Boxen denselben konkreten Typ enthalten. Eine Box
+                Bei <code>? extends Number</code> weiß der Compiler nicht, weiß der Compiler
+                nicht, welcher konkrete Untertyp von Number in der jeweiligen Box verwendet wird. Eine Box
                 könnte zum Beispiel <code>Integer</code>, die andere <code>Double</code>
-                enthalten.
+                enthalten. Deshalb darf kein konkreter Wert hineingeschrieben werden (außer null).
             </p>
-
             <p>
                 Deshalb darf kein konkreter Wert mit <code>setValue()</code>
                 hineingeschrieben werden (außer <code>null</code>). Herauslesen ist
@@ -852,8 +851,8 @@ class Student extends Person {
 // Student max = test(studenten);</pre>
 
             <p>
-                Der Fehler entsteht, weil <code>Student</code>
-                <code>Comparable&lt;Person&gt;</code> implementiert und nicht
+                Der Fehler entsteht, weil <code>Student</code> durch die Vererbung
+                <code>Comparable&lt;Person&gt;</code> ist und nicht
                 <code>Comparable&lt;Student&gt;</code>.
             </p>
 
@@ -878,13 +877,13 @@ Student max = test(studenten);
 System.out.println(max.name);</pre>
 
             <p>
-                Für <code>T = Student</code> bedeutet
-                <code>Comparable&lt;? super T&gt;</code>, dass <code>Student</code>
-                mit <code>Student</code> oder einem Supertyp von
-                <code>Student</code> vergleichbar sein darf. Dazu gehört hier
-                <code>Person</code>.
+                Für <code>T = Student</code> verlangt
+                <code>Comparable&lt;? super Student&gt;</code>, dass <code>Student</code>
+                mit <code>Student</code> oder einem Obertyp Supertyp von
+                <code>Student</code> vergleichbar ist. 
+                <code>Person</code> ist ein Obertyp von Student - daher ist <code>Comparable&lt;Person&gt; erlaubt.</code>
             </p>
-
+        
             <pre class="copyable">Student s = new Student("Anna");
 Person p = new Person("Bernd");
 int result = s.compareTo(p);</pre>
