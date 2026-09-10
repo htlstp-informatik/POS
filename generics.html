@@ -663,6 +663,311 @@ System.out.println(calculateSum(box1, box2));</pre>
         </div>
     </article>
 
+
+    <article>
+        <h3>Übung 5: Type Erasure</h3>
+
+        <p>
+            Schreibe ein Programm, das prüft, ob eine
+            <code>ArrayList&lt;Integer&gt;</code> und eine
+            <code>ArrayList&lt;String&gt;</code> zur Laufzeit denselben Typ haben.
+            Erkläre das Ergebnis.
+        </p>
+
+        <button onclick="toggleSolution('hint5')">Hinweis anzeigen</button>
+        <div id="hint5" class="solution">
+            <p>
+                Vergleiche die Ergebnisse von <code>getClass()</code>.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution5')">Lösung anzeigen</button>
+        <div id="solution5" class="solution">
+            <pre class="copyable">import java.util.ArrayList;
+import java.util.List;
+
+public class TypeErasureDemo {
+
+    public static void main(String[] args) {
+        List&lt;Integer&gt; integerList = new ArrayList&lt;&gt;();
+        List&lt;String&gt; stringList = new ArrayList&lt;&gt;();
+
+        System.out.println(
+                integerList.getClass() == stringList.getClass()
+        );
+    }
+}</pre>
+
+            <p>
+                Die Ausgabe ist <code>true</code>.
+                Durch Type Erasure sind die konkreten Typparameter
+                <code>Integer</code> und <code>String</code> zur Laufzeit
+                nicht mehr als unterschiedliche Klassen vorhanden.
+            </p>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>Übung 6: Raw Types und ClassCastException</h3>
+
+        <p>
+            Zeige anhand eines Beispiels, wie die Verwendung eines Raw Types
+            bei <code>GenericBox</code> zu einer
+            <code>ClassCastException</code> führen kann.
+        </p>
+
+        <button onclick="toggleSolution('hint6')">Hinweis anzeigen</button>
+        <div id="hint6" class="solution">
+            <p>
+                Weise zuerst eine <code>GenericBox&lt;String&gt;</code> einer
+                Raw-Type-Referenz zu und speichere danach einen
+                <code>Integer</code> hinein.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution6')">Lösung anzeigen</button>
+        <div id="solution6" class="solution">
+            <pre class="copyable">GenericBox&lt;String&gt; stringBox = new GenericBox&lt;&gt;();
+
+GenericBox rawBox = stringBox;
+rawBox.setValue(42);
+
+String text = stringBox.getValue();
+// ClassCastException</pre>
+
+            <p>
+                Durch den Raw Type geht die Typsicherheit verloren.
+                Der Compiler kann nicht mehr verhindern, dass ein falscher
+                Typ in die Box geschrieben wird.
+            </p>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>Übung 7: Einschränkungen von Generics</h3>
+
+        <p>
+            Erkläre anhand der folgenden Beispiele, warum sie nicht erlaubt sind.
+        </p>
+
+        <pre class="copyable">// a)
+T value = new T();
+
+// b)
+GenericBox&lt;String&gt;[] boxes =
+        new GenericBox&lt;String&gt;[10];</pre>
+
+        <button onclick="toggleSolution('hint7')">Hinweis anzeigen</button>
+        <div id="hint7" class="solution">
+            <p>
+                Denke bei a) an Type Erasure und bei b) an die Kombination
+                aus Arrays und generischen Typen.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution7')">Lösung anzeigen</button>
+        <div id="solution7" class="solution">
+            <p>
+                <strong>a)</strong> <code>new T()</code> ist nicht erlaubt,
+                weil der konkrete Typ von <code>T</code> zur Laufzeit nicht
+                bekannt ist.
+            </p>
+
+            <p>
+                <strong>b)</strong> Ein Array wie
+                <code>new GenericBox&lt;String&gt;[10]</code> darf nicht erzeugt werden.
+                Arrays kennen ihren Komponententyp zur Laufzeit, bei Generics
+                wird die Typinformation dagegen durch Type Erasure entfernt.
+            </p>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>Übung 8: NumberBox mit Bounded Type</h3>
+
+        <p>
+            Erstelle eine Klasse <code>NumberBox&lt;T extends Number&gt;</code>
+            mit einer Methode <code>int intValue()</code>.
+            Teste die Klasse mit <code>Integer</code> und <code>Double</code>.
+        </p>
+
+        <button onclick="toggleSolution('hint8')">Hinweis anzeigen</button>
+        <div id="hint8" class="solution">
+            <p>
+                Weil <code>T</code> von <code>Number</code> abgeleitet sein muss,
+                kannst du <code>intValue()</code> direkt auf dem gespeicherten
+                Wert aufrufen.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button>
+        <div id="solution8" class="solution">
+            <pre class="copyable">public class NumberBox&lt;T extends Number&gt; {
+    private T value;
+
+    public NumberBox(T value) {
+        this.value = value;
+    }
+
+    public int intValue() {
+        return value.intValue();
+    }
+}</pre>
+
+            <pre class="copyable">NumberBox&lt;Integer&gt; intBox =
+        new NumberBox&lt;&gt;(42);
+
+NumberBox&lt;Double&gt; doubleBox =
+        new NumberBox&lt;&gt;(3.14);
+
+System.out.println(intBox.intValue());
+System.out.println(doubleBox.intValue());</pre>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>Übung 9: Lower Bounded Wildcard</h3>
+
+        <p>
+            Implementiere eine Methode, die eine
+            <code>GenericBox&lt;? super Integer&gt;</code> entgegennimmt
+            und dort eine Zahl speichert.
+        </p>
+
+        <p>
+            Prüfe anschließend, welchen Typ du mit <code>getValue()</code>
+            ohne Cast sicher auslesen kannst.
+        </p>
+
+        <button onclick="toggleSolution('hint9')">Hinweis anzeigen</button>
+        <div id="hint9" class="solution">
+            <p>
+                Ein <code>Integer</code> darf sicher geschrieben werden.
+                Beim Lesen ist nur <code>Object</code> garantiert.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution9')">Lösung anzeigen</button>
+        <div id="solution9" class="solution">
+            <pre class="copyable">public static void storeInteger(
+        GenericBox&lt;? super Integer&gt; box) {
+
+    box.setValue(42);
+
+    Object value = box.getValue();
+    System.out.println(value);
+}</pre>
+
+            <p>
+                Eine direkte Zuweisung an <code>Integer</code> ist nicht sicher:
+            </p>
+
+            <pre class="copyable">// nicht erlaubt:
+Integer value = box.getValue();</pre>
+
+            <p>
+                Die Box könnte nämlich auch eine
+                <code>GenericBox&lt;Number&gt;</code> oder
+                <code>GenericBox&lt;Object&gt;</code> sein.
+            </p>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>Übung 10: Unbounded Wildcard</h3>
+
+        <p>
+            Implementiere eine Methode, die die Größe einer beliebigen Liste
+            zurückgibt. Verwende dafür <code>List&lt;?&gt;</code>.
+        </p>
+
+        <button onclick="toggleSolution('hint10')">Hinweis anzeigen</button>
+        <div id="hint10" class="solution">
+            <p>
+                Für <code>size()</code> musst du den konkreten Elementtyp
+                der Liste nicht kennen.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution10')">Lösung anzeigen</button>
+        <div id="solution10" class="solution">
+            <pre class="copyable">public static int getSize(List&lt;?&gt; list) {
+    return list.size();
+}</pre>
+
+            <pre class="copyable">List&lt;String&gt; namen = List.of("Anna", "Max");
+List&lt;Integer&gt; zahlen = List.of(1, 2, 3);
+
+System.out.println(getSize(namen));
+System.out.println(getSize(zahlen));</pre>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>Zusatzaufgabe 11: Comparable und Generics</h3>
+
+        <p>
+            Untersuche die folgende Methode:
+        </p>
+
+        <pre class="copyable">public static &lt;T extends Comparable&lt;? super T&gt;&gt;
+T test(List&lt;T&gt; list) {
+    ...
+}</pre>
+
+        <p>
+            Erkläre, was die Einschränkung
+            <code>T extends Comparable&lt;? super T&gt;</code> bedeutet
+            und zeige ein Beispiel mit einem passenden Datentyp.
+        </p>
+
+        <button onclick="toggleSolution('hint11')">Hinweis anzeigen</button>
+        <div id="hint11" class="solution">
+            <p>
+                Die Methode verlangt einen Typ <code>T</code>, dessen Objekte
+                miteinander verglichen werden können.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution11')">Lösung anzeigen</button>
+        <div id="solution11" class="solution">
+            <p>
+                <code>T extends Comparable&lt;? super T&gt;</code> bedeutet:
+                <code>T</code> muss mit sich selbst oder mit einem Obertyp von
+                <code>T</code> vergleichbar sein.
+            </p>
+
+            <p>
+                Dadurch kann die Methode innerhalb der Liste Werte mit
+                <code>compareTo(...)</code> vergleichen.
+            </p>
+
+            <pre class="copyable">public static &lt;T extends Comparable&lt;? super T&gt;&gt;
+T test(List&lt;T&gt; list) {
+    T max = list.get(0);
+
+    for (T value : list) {
+        if (value.compareTo(max) &gt; 0) {
+            max = value;
+        }
+    }
+
+    return max;
+}</pre>
+
+            <pre class="copyable">List&lt;Integer&gt; zahlen = List.of(4, 9, 2, 7);
+
+System.out.println(test(zahlen));
+// 9</pre>
+        </div>
+    </article>
+
 </section>
 
 </main>
