@@ -15,10 +15,10 @@
 </header>
 
 <nav>
-    <a href="index.html">Start</a>
+    <a href="#start">Start</a>
     <a href="#warum">Warum Generics?</a>
-    <a href="#klassen">Generische Klassen</a>
-    <a href="#methoden">Generische Methoden</a>
+    <a href="#klassen">Klassen</a>
+    <a href="#methoden">Methoden</a>
     <a href="#vererbung">Vererbung</a>
     <a href="#bounded">Bounded Types</a>
     <a href="#wildcards">Wildcards</a>
@@ -34,21 +34,15 @@
     <p>
         Mit Generics können Klassen, Interfaces und Methoden so geschrieben werden,
         dass sie mit unterschiedlichen Datentypen arbeiten können.
-    </p>
-
-    <p>
         Der konkrete Datentyp wird erst bei der Verwendung festgelegt.
-        Dadurch wird der Code wiederverwendbar und gleichzeitig typsicher.
     </p>
 
     <pre class="copyable">GenericBox&lt;Integer&gt; box = new GenericBox&lt;&gt;();
 box.setValue(3);
-
 int value = box.getValue();</pre>
 
     <p>
-        Der Typ <code>Integer</code> wird hier als Typparameter verwendet.
-        Der Compiler stellt sicher, dass nur passende Werte gespeichert werden.
+        Dadurch wird der Code wiederverwendbar und gleichzeitig typsicher.
     </p>
 </section>
 
@@ -61,18 +55,16 @@ int value = box.getValue();</pre>
 
         <p>
             Vor Java 5 speicherten Collections ihre Elemente als <code>Object</code>.
-            Beim Auslesen war deshalb häufig ein Cast notwendig.
+            Beim Auslesen war deshalb ein Cast notwendig.
         </p>
 
         <pre class="copyable">List list = new ArrayList();
-
 list.add("Alice");
-
 String name = (String) list.get(0);</pre>
 
         <p>
-            Wird ein falscher Typ gespeichert oder falsch gecastet,
-            kann erst zur Laufzeit eine <code>ClassCastException</code> auftreten.
+            Ein falscher Typ kann dadurch erst zur Laufzeit zu einer
+            <code>ClassCastException</code> führen.
         </p>
     </article>
 
@@ -80,17 +72,11 @@ String name = (String) list.get(0);</pre>
         <h3>Mit Generics</h3>
 
         <pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;();
-
 list.add("Alice");
-
 String name = list.get(0);</pre>
 
-        <p>
-            Vorteile von Generics:
-        </p>
-
         <ul>
-            <li>Typsicherheit bereits beim Kompilieren</li>
+            <li>Typsicherheit zur Compile-Zeit</li>
             <li>kein Cast beim Auslesen notwendig</li>
             <li>bessere Lesbarkeit</li>
             <li>bessere Wiederverwendbarkeit</li>
@@ -106,8 +92,9 @@ String name = list.get(0);</pre>
         <h3>Das Problem ohne Generics</h3>
 
         <p>
-            Möchten wir eine Box für verschiedene Datentypen verwenden,
-            müssten wir ohne Generics für jeden Typ eine eigene Klasse schreiben.
+            Ohne Generics müsste für verschiedene Datentypen jeweils eine eigene Box
+            geschrieben werden, zum Beispiel eine <code>IntegerBox</code> und eine
+            <code>DoubleBox</code>.
         </p>
 
         <pre class="copyable">public class IntegerBox {
@@ -121,10 +108,6 @@ String name = list.get(0);</pre>
         return value;
     }
 }</pre>
-
-        <p>
-            Für <code>Double</code> wäre dann eine zweite, fast gleiche Klasse notwendig.
-        </p>
     </article>
 
     <article>
@@ -143,9 +126,8 @@ String name = list.get(0);</pre>
 }</pre>
 
         <p>
-            Damit kann zwar jeder Objekttyp gespeichert werden,
-            aber beim Auslesen muss wieder gecastet werden.
-            Außerdem kann versehentlich ein falscher Typ gespeichert werden.
+            Damit kann zwar jeder Objekttyp gespeichert werden, aber beim Auslesen
+            ist ein Cast notwendig und die Typsicherheit geht verloren.
         </p>
     </article>
 
@@ -165,24 +147,21 @@ String name = list.get(0);</pre>
 }</pre>
 
         <p>
-            <code>T</code> ist ein <strong>Typparameter</strong>.
-            Er steht zunächst nur als Platzhalter für einen später festgelegten Typ.
+            <code>T</code> ist ein <strong>Typparameter</strong>. Er ist ein Platzhalter
+            für den später verwendeten Typ.
         </p>
 
         <pre class="copyable">GenericBox&lt;Integer&gt; intBox = new GenericBox&lt;&gt;();
-
 intBox.setValue(3);
+int value = intBox.getValue();
 
-int value = intBox.getValue();</pre>
+// Compilerfehler:
+// intBox.setValue("TEST");</pre>
 
         <p>
-            In diesem Objekt steht <code>T</code> für <code>Integer</code>.
-            Der Diamond-Operator <code>&lt;&gt;</code> kann verwendet werden,
-            wenn Java den Typ aus der linken Seite ableiten kann.
+            Der Diamond-Operator <code>&lt;&gt;</code> kann verwendet werden, wenn Java
+            den Typ aus dem Zusammenhang ableiten kann.
         </p>
-
-        <pre class="copyable">// Compilerfehler:
-intBox.setValue("TEST");</pre>
     </article>
 
     <article>
@@ -206,12 +185,11 @@ intBox.setValue("TEST");</pre>
     }
 }</pre>
 
-        <pre class="copyable">Entry&lt;Integer, String&gt; entry =
-        new Entry&lt;&gt;(1, "Alice");</pre>
+        <pre class="copyable">Entry&lt;Integer, String&gt; entry = new Entry&lt;&gt;(1, "Alice");</pre>
 
         <p>
-            Häufig verwendete Namen für Typparameter sind zum Beispiel
-            <code>T</code> für Type, <code>K</code> für Key und <code>V</code> für Value.
+            Häufig verwendete Bezeichnungen sind <code>T</code> für Type,
+            <code>K</code> für Key und <code>V</code> für Value.
         </p>
     </article>
 </section>
@@ -223,27 +201,19 @@ intBox.setValue("TEST");</pre>
     <article>
         <p>
             Auch einzelne Methoden können eigene Typparameter besitzen.
-            Die Klasse selbst muss dafür nicht generisch sein.
-        </p>
-
-        <p>
             Der Typparameter steht nach dem Modifier und vor dem Rückgabetyp.
         </p>
 
-        <pre class="copyable">public static &lt;T&gt; T first(T a, T b) {
-    return a;
+        <pre class="copyable">public static &lt;S, T&gt; Pair&lt;S, T&gt; createPair(S first, T second) {
+    return new Pair&lt;&gt;(first, second);
 }</pre>
 
-        <pre class="copyable">String text = first("A", "B");
-Integer zahl = first(3, 4);</pre>
-
         <p>
-            Java kann den Typ beim Methodenaufruf meistens automatisch ermitteln.
+            Java kann die Typen beim Aufruf meistens automatisch bestimmen.
             Das nennt man <strong>Type Inference</strong>.
         </p>
 
         <pre class="copyable">PairUtil.&lt;Integer, Integer&gt;createPair(3, 4);
-
 PairUtil.createPair(3, 4);</pre>
     </article>
 </section>
@@ -253,33 +223,23 @@ PairUtil.createPair(3, 4);</pre>
     <h2>Generics und Vererbung</h2>
 
     <article>
-        <p>
-            Bei normalen Typen gilt:
-        </p>
+        <p>Bei normalen Typen gilt:</p>
 
         <pre class="copyable">Integer x = 4;
 Number y = x;
 Object o = x;</pre>
 
-        <p>
-            Bei generischen Typen gilt das aber nicht automatisch:
-        </p>
+        <p>Bei generischen Typen gilt das nicht automatisch:</p>
 
         <pre class="copyable">GenericBox&lt;Integer&gt; integerBox = new GenericBox&lt;&gt;();
 GenericBox&lt;Number&gt; numberBox = new GenericBox&lt;&gt;();
 
 // Compilerfehler:
-numberBox = integerBox;</pre>
+// numberBox = integerBox;</pre>
 
         <p>
-            <code>GenericBox&lt;Number&gt;</code> ist also keine Oberklasse von
+            <code>GenericBox&lt;Number&gt;</code> ist keine Oberklasse von
             <code>GenericBox&lt;Integer&gt;</code>.
-        </p>
-
-        <p>
-            Das verhindert, dass über eine <code>GenericBox&lt;Number&gt;</code>
-            beispielsweise ein <code>Double</code> in eine eigentlich als
-            <code>GenericBox&lt;Integer&gt;</code> gedachte Box geschrieben wird.
         </p>
     </article>
 </section>
@@ -306,16 +266,15 @@ numberBox = integerBox;</pre>
 }</pre>
 
         <p>
-            <code>T extends Number</code> bedeutet:
-            Als Typ sind <code>Number</code> und Unterklassen von <code>Number</code>
-            erlaubt.
+            <code>T extends Number</code> bedeutet: Erlaubt sind <code>Number</code>
+            und Unterklassen von <code>Number</code>.
         </p>
 
         <pre class="copyable">new NumberBox&lt;&gt;(3);
 new NumberBox&lt;&gt;(3.1415);
 
 // Compilerfehler:
-new NumberBox&lt;&gt;("Text");</pre>
+// new NumberBox&lt;&gt;("Text");</pre>
     </article>
 </section>
 
@@ -327,7 +286,7 @@ new NumberBox&lt;&gt;("Text");</pre>
         <h3>Unbounded Wildcard: &lt;?&gt;</h3>
 
         <p>
-            <code>?</code> bedeutet, dass der konkrete Typ nicht bekannt sein muss.
+            Bei <code>?</code> ist der konkrete Typ unbekannt.
         </p>
 
         <pre class="copyable">void printBox(GenericBox&lt;?&gt; box) {
@@ -335,8 +294,8 @@ new NumberBox&lt;&gt;("Text");</pre>
 }</pre>
 
         <p>
-            Der Wert kann als <code>Object</code> gelesen werden.
-            Ein konkreter Wert kann aber nicht sicher hineingeschrieben werden.
+            Sicher gelesen werden kann nur als <code>Object</code>.
+            Ein konkreter Wert kann nicht sicher hineingeschrieben werden.
         </p>
     </article>
 
@@ -346,25 +305,21 @@ new NumberBox&lt;&gt;("Text");</pre>
         <pre class="copyable">GenericBox&lt;? extends Number&gt; box;</pre>
 
         <p>
-            Die Box darf eine <code>GenericBox&lt;Number&gt;</code>,
-            <code>GenericBox&lt;Integer&gt;</code>,
-            <code>GenericBox&lt;Double&gt;</code> usw. referenzieren.
+            Die Box kann zum Beispiel eine <code>GenericBox&lt;Integer&gt;</code>,
+            <code>GenericBox&lt;Double&gt;</code> oder <code>GenericBox&lt;Number&gt;</code>
+            referenzieren.
         </p>
 
         <p>
-            Sicher gelesen werden kann eine <code>Number</code>.
+            Lesen ist sicher, weil der Wert mindestens ein <code>Number</code> ist.
+            Schreiben ist nicht sicher, weil der konkrete Untertyp unbekannt ist.
         </p>
 
-        <pre class="copyable">Number value = box.getValue();</pre>
+        <pre class="copyable">Number value = box.getValue();
 
-        <p>
-            Schreiben ist dagegen nicht möglich,
-            weil der tatsächliche konkrete Zahlentyp unbekannt ist.
-        </p>
-
-        <pre class="copyable">// nicht erlaubt:
-box.setValue(3);
-box.setValue(3.14);</pre>
+// nicht erlaubt:
+// box.setValue(3);
+// box.setValue(3.14);</pre>
     </article>
 
     <article>
@@ -373,19 +328,16 @@ box.setValue(3.14);</pre>
         <pre class="copyable">GenericBox&lt;? super Integer&gt; box;</pre>
 
         <p>
-            Möglich sind zum Beispiel
-            <code>GenericBox&lt;Integer&gt;</code>,
-            <code>GenericBox&lt;Number&gt;</code> oder
-            <code>GenericBox&lt;Object&gt;</code>.
+            Möglich sind zum Beispiel <code>GenericBox&lt;Integer&gt;</code>,
+            <code>GenericBox&lt;Number&gt;</code> und <code>GenericBox&lt;Object&gt;</code>.
         </p>
 
         <p>
             Ein <code>Integer</code> kann sicher hineingeschrieben werden.
-            Beim Lesen ist dagegen nur <code>Object</code> garantiert.
+            Beim Lesen ist nur <code>Object</code> garantiert.
         </p>
 
         <pre class="copyable">box.setValue(42);
-
 Object value = box.getValue();</pre>
     </article>
 
@@ -393,28 +345,26 @@ Object value = box.getValue();</pre>
         <h3>PECS</h3>
 
         <p>
-            Als Merkhilfe gilt:
-            <strong>Producer Extends, Consumer Super</strong>.
+            Merkhilfe: <strong>Producer Extends, Consumer Super</strong>.
         </p>
 
         <ul>
-            <li><code>? extends T</code>: gut zum Lesen</li>
-            <li><code>? super T</code>: gut zum Schreiben</li>
+            <li><code>? extends T</code>: Lesen ist sicher</li>
+            <li><code>? super T</code>: Schreiben ist sicher</li>
         </ul>
     </article>
 </section>
 
 
 <section id="einschraenkungen" class="card">
-    <h2>Einschränkungen von Generics</h2>
+    <h2>Einschränkungen und Besonderheiten</h2>
 
     <article>
         <h3>Keine primitiven Datentypen</h3>
 
         <pre class="copyable">// nicht erlaubt:
-GenericBox&lt;int&gt; box;
+// GenericBox&lt;int&gt; box;
 
-// stattdessen:
 GenericBox&lt;Integer&gt; box;</pre>
     </article>
 
@@ -422,39 +372,24 @@ GenericBox&lt;Integer&gt; box;</pre>
         <h3>Keine Instanz von T erzeugen</h3>
 
         <pre class="copyable">// nicht erlaubt:
-T value = new T();</pre>
+// T value = new T();</pre>
     </article>
 
     <article>
         <h3>Keine Arrays mit konkretem generischem Typ erzeugen</h3>
 
         <pre class="copyable">// nicht erlaubt:
-GenericBox&lt;String&gt;[] boxes =
-        new GenericBox&lt;String&gt;[10];</pre>
-    </article>
-
-    <article>
-        <h3>Kein static Feld mit dem Typparameter der Klasse</h3>
-
-        <pre class="copyable">public class GenericBox&lt;T&gt; {
-
-    // nicht erlaubt:
-    static T value;
-}</pre>
+// GenericBox&lt;String&gt;[] boxes = new GenericBox&lt;String&gt;[10];</pre>
     </article>
 
     <article>
         <h3>Raw Types vermeiden</h3>
 
-        <pre class="copyable">// Raw Type - vermeiden:
-GenericBox box = new GenericBox();
-
-// besser:
-GenericBox&lt;Integer&gt; box = new GenericBox&lt;&gt;();</pre>
+        <pre class="copyable">GenericBox rawBox = new GenericBox();</pre>
 
         <p>
-            Raw Types existieren hauptsächlich aus Gründen der Rückwärtskompatibilität.
-            Dabei geht die Typsicherheit verloren.
+            Bei Raw Types fehlt die Typinformation. Sie existieren hauptsächlich
+            aus Gründen der Rückwärtskompatibilität und sollten vermieden werden.
         </p>
     </article>
 
@@ -462,17 +397,10 @@ GenericBox&lt;Integer&gt; box = new GenericBox&lt;&gt;();</pre>
         <h3>Type Erasure</h3>
 
         <p>
-            Die Typinformationen von Generics werden beim Übersetzen weitgehend entfernt.
-            Zur Laufzeit existieren deshalb beispielsweise
-            <code>List&lt;Integer&gt;</code> und <code>List&lt;Float&gt;</code>
-            als dieselbe Laufzeitklasse.
+            Die konkreten Typparameter werden beim Übersetzen weitgehend entfernt.
+            Deshalb besitzen zum Beispiel <code>ArrayList&lt;Integer&gt;</code> und
+            <code>ArrayList&lt;String&gt;</code> zur Laufzeit dieselbe Klasse.
         </p>
-
-        <pre class="copyable">List&lt;Integer&gt; li = new ArrayList&lt;&gt;();
-List&lt;Float&gt; lf = new ArrayList&lt;&gt;();
-
-System.out.println(li.getClass() == lf.getClass());
-// true</pre>
     </article>
 </section>
 
@@ -481,330 +409,235 @@ System.out.println(li.getClass() == lf.getClass());
     <h2>Übungen</h2>
 
     <article>
-        <h3>Übung 1: GenericBox</h3>
+        <h3>1. Motivation</h3>
 
         <p>
-            Erstelle eine generische Klasse <code>Box&lt;T&gt;</code>.
-            Eine Box soll genau einen Wert speichern können.
-        </p>
-
-        <p>
-            Implementiere:
-        </p>
-
-        <ul>
-            <li>ein Attribut <code>value</code></li>
-            <li>einen Konstruktor</li>
-            <li><code>getValue()</code></li>
-            <li><code>setValue(...)</code></li>
-        </ul>
-
-        <p>
-            Erzeuge anschließend eine <code>Box&lt;String&gt;</code>
-            und eine <code>Box&lt;Integer&gt;</code>.
+            Erkläre anhand eines Beispiels, warum Generics in Java eingeführt wurden.
         </p>
 
         <button onclick="toggleSolution('hint1')">Hinweis anzeigen</button>
         <div id="hint1" class="solution">
-            <pre class="copyable">public class Box&lt;T&gt; {
-    private T value;
-
-    ...
-}</pre>
+            <p>
+                Vergleiche eine Collection ohne Generics mit einer
+                <code>List&lt;String&gt;</code>. Achte besonders auf Casts und Typsicherheit.
+            </p>
         </div>
 
         <button onclick="toggleSolution('solution1')">Lösung anzeigen</button>
         <div id="solution1" class="solution">
-            <pre class="copyable">public class Box&lt;T&gt; {
+            <pre class="copyable">List list = new ArrayList();
+list.add("Alice");
+String name = (String) list.get(0);</pre>
+
+            <p>
+                Ohne Generics ist beim Auslesen ein Cast notwendig. Außerdem kann
+                versehentlich ein falscher Typ gespeichert werden.
+            </p>
+
+            <pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;();
+list.add("Alice");
+String name = list.get(0);</pre>
+
+            <p>
+                Mit Generics prüft der Compiler den Typ bereits beim Übersetzen.
+                Ein Cast beim Auslesen ist nicht notwendig.
+            </p>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>2. Generische Klasse</h3>
+
+        <p>
+            Implementiere eine generische Klasse <code>GenericBox&lt;T&gt;</code> mit den
+            Methoden <code>setValue()</code> und <code>getValue()</code>.
+            Zeige, wie man eine Box für <code>Integer</code> und eine Box für
+            <code>String</code> verwendet.
+        </p>
+
+        <button onclick="toggleSolution('hint2')">Hinweis anzeigen</button>
+        <div id="hint2" class="solution">
+            <pre class="copyable">public class GenericBox&lt;T&gt; {
+    private T value;
+}</pre>
+        </div>
+
+        <button onclick="toggleSolution('solution2')">Lösung anzeigen</button>
+        <div id="solution2" class="solution">
+            <pre class="copyable">public class GenericBox&lt;T&gt; {
     private T value;
 
-    public Box(T value) {
+    public void setValue(T value) {
         this.value = value;
     }
 
     public T getValue() {
         return value;
     }
-
-    public void setValue(T value) {
-        this.value = value;
-    }
 }</pre>
 
-            <pre class="copyable">Box&lt;String&gt; textBox = new Box&lt;&gt;("Hallo");
-Box&lt;Integer&gt; numberBox = new Box&lt;&gt;(42);
+            <pre class="copyable">GenericBox&lt;Integer&gt; intBox = new GenericBox&lt;&gt;();
+intBox.setValue(42);
 
-System.out.println(textBox.getValue());
-System.out.println(numberBox.getValue());</pre>
+GenericBox&lt;String&gt; stringBox = new GenericBox&lt;&gt;();
+stringBox.setValue("Hallo");</pre>
         </div>
     </article>
 
 
     <article>
-        <h3>Übung 2: Pair mit zwei Typparametern</h3>
+        <h3>3. Generische Methode</h3>
 
         <p>
-            Erstelle eine generische Klasse <code>Pair&lt;A, B&gt;</code>,
-            die zwei Werte unterschiedlicher Typen speichern kann.
-        </p>
-
-        <p>
-            Erzeuge anschließend:
-        </p>
-
-        <pre class="copyable">Pair&lt;String, Integer&gt; person =
-        new Pair&lt;&gt;("Anna", 17);</pre>
-
-        <button onclick="toggleSolution('hint2')">Hinweis anzeigen</button>
-        <div id="hint2" class="solution">
-            <p>
-                Die Klasse benötigt zwei Typparameter und zwei Attribute.
-            </p>
-        </div>
-
-        <button onclick="toggleSolution('solution2')">Lösung anzeigen</button>
-        <div id="solution2" class="solution">
-            <pre class="copyable">public class Pair&lt;A, B&gt; {
-    private A first;
-    private B second;
-
-    public Pair(A first, B second) {
-        this.first = first;
-        this.second = second;
-    }
-
-    public A getFirst() {
-        return first;
-    }
-
-    public B getSecond() {
-        return second;
-    }
-}</pre>
-        </div>
-    </article>
-
-
-    <article>
-        <h3>Übung 3: Generische Methode</h3>
-
-        <p>
-            Schreibe eine generische Methode <code>printArray(...)</code>,
-            die alle Elemente eines Arrays ausgibt.
-            Die Methode soll mit unterschiedlichen Objekttypen funktionieren.
+            Schreibe eine generische Methode <code>createPair</code>, die zwei Objekte
+            entgegennimmt und ein <code>Pair&lt;S, T&gt;</code> zurückgibt.
         </p>
 
         <button onclick="toggleSolution('hint3')">Hinweis anzeigen</button>
         <div id="hint3" class="solution">
             <p>
-                Der Typparameter steht vor dem Rückgabetyp:
+                Die Typparameter der Methode stehen vor dem Rückgabetyp.
             </p>
 
-            <pre class="copyable">public static &lt;T&gt; void printArray(T[] array) {
+            <pre class="copyable">public static &lt;S, T&gt; Pair&lt;S, T&gt; createPair(S first, T second) {
     ...
 }</pre>
         </div>
 
         <button onclick="toggleSolution('solution3')">Lösung anzeigen</button>
         <div id="solution3" class="solution">
-            <pre class="copyable">public static &lt;T&gt; void printArray(T[] array) {
-    for (T element : array) {
-        System.out.println(element);
-    }
+            <pre class="copyable">public static &lt;S, T&gt; Pair&lt;S, T&gt; createPair(S first, T second) {
+    return new Pair&lt;&gt;(first, second);
 }</pre>
 
-            <pre class="copyable">String[] namen = {"Anna", "Max"};
-Integer[] zahlen = {1, 2, 3};
-
-printArray(namen);
-printArray(zahlen);</pre>
+            <pre class="copyable">Pair&lt;String, Integer&gt; pair = createPair("Anna", 17);</pre>
         </div>
     </article>
 
 
     <article>
-        <h3>Übung 4: Zahlen addieren</h3>
+        <h3>4. Type Erasure</h3>
 
         <p>
-            Gegeben ist die Klasse <code>GenericBox&lt;T&gt;</code>.
-            Schreibe eine Methode, die die Werte aus zwei Boxen addiert.
-            Die Boxen sollen unterschiedliche Zahlentypen enthalten dürfen.
+            Schreibe ein Programm, das prüft, ob
+            <code>new ArrayList&lt;Integer&gt;()</code> und
+            <code>new ArrayList&lt;String&gt;()</code> zur Laufzeit denselben Typ haben.
         </p>
-
-        <p>
-            Zum Beispiel soll Folgendes möglich sein:
-        </p>
-
-        <pre class="copyable">GenericBox&lt;Integer&gt; box1 = new GenericBox&lt;&gt;();
-box1.setValue(5);
-
-GenericBox&lt;Double&gt; box2 = new GenericBox&lt;&gt;();
-box2.setValue(3.5);
-
-System.out.println(calculateSum(box1, box2));</pre>
 
         <button onclick="toggleSolution('hint4')">Hinweis anzeigen</button>
         <div id="hint4" class="solution">
-            <p>
-                Verwende eine Upper Bounded Wildcard:
-                <code>? extends Number</code>.
-            </p>
-        </div>
-
-        <button onclick="toggleSolution('solution4')">Lösung anzeigen</button>
-        <div id="solution4" class="solution">
-            <pre class="copyable">public static double calculateSum(
-        GenericBox&lt;? extends Number&gt; box1,
-        GenericBox&lt;? extends Number&gt; box2) {
-
-    return box1.getValue().doubleValue()
-            + box2.getValue().doubleValue();
-}</pre>
-        </div>
-    </article>
-
-
-    <article>
-        <h3>Übung 5: Type Erasure</h3>
-
-        <p>
-            Schreibe ein Programm, das prüft, ob eine
-            <code>ArrayList&lt;Integer&gt;</code> und eine
-            <code>ArrayList&lt;String&gt;</code> zur Laufzeit denselben Typ haben.
-            Erkläre das Ergebnis.
-        </p>
-
-        <button onclick="toggleSolution('hint5')">Hinweis anzeigen</button>
-        <div id="hint5" class="solution">
             <p>
                 Vergleiche die Ergebnisse von <code>getClass()</code>.
             </p>
         </div>
 
-        <button onclick="toggleSolution('solution5')">Lösung anzeigen</button>
-        <div id="solution5" class="solution">
-            <pre class="copyable">import java.util.ArrayList;
-import java.util.List;
-
-public class TypeErasureDemo {
-
-    public static void main(String[] args) {
-        List&lt;Integer&gt; integerList = new ArrayList&lt;&gt;();
-        List&lt;String&gt; stringList = new ArrayList&lt;&gt;();
-
-        System.out.println(
-                integerList.getClass() == stringList.getClass()
-        );
-    }
-}</pre>
+        <button onclick="toggleSolution('solution4')">Lösung anzeigen</button>
+        <div id="solution4" class="solution">
+            <pre class="copyable">ArrayList&lt;Integer&gt; a = new ArrayList&lt;&gt;();
+ArrayList&lt;String&gt; b = new ArrayList&lt;&gt;();
+System.out.println(a.getClass() == b.getClass());</pre>
 
             <p>
-                Die Ausgabe ist <code>true</code>.
-                Durch Type Erasure sind die konkreten Typparameter
-                <code>Integer</code> und <code>String</code> zur Laufzeit
-                nicht mehr als unterschiedliche Klassen vorhanden.
+                Die Ausgabe ist <code>true</code>. Durch Type Erasure sind die
+                konkreten Typparameter zur Laufzeit nicht mehr vorhanden.
             </p>
         </div>
     </article>
 
 
     <article>
-        <h3>Übung 6: Raw Types und ClassCastException</h3>
+        <h3>5. Raw Types</h3>
 
         <p>
-            Zeige anhand eines Beispiels, wie die Verwendung eines Raw Types
-            bei <code>GenericBox</code> zu einer
-            <code>ClassCastException</code> führen kann.
+            Zeige anhand eines einfachen Beispiels, wie die Verwendung eines Raw Types
+            bei <code>GenericBox</code> zu einer <code>ClassCastException</code> führen kann.
+        </p>
+
+        <button onclick="toggleSolution('hint5')">Hinweis anzeigen</button>
+        <div id="hint5" class="solution">
+            <p>
+                Erzeuge zuerst eine <code>GenericBox&lt;String&gt;</code> und weise dieselbe
+                Box anschließend einer Raw-Type-Referenz zu.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution5')">Lösung anzeigen</button>
+        <div id="solution5" class="solution">
+            <pre class="copyable">GenericBox&lt;String&gt; stringBox = new GenericBox&lt;&gt;();
+GenericBox rawBox = stringBox;
+rawBox.setValue(42);
+String text = stringBox.getValue(); // ClassCastException</pre>
+
+            <p>
+                Über den Raw Type geht die Typprüfung verloren. Deshalb kann ein
+                <code>Integer</code> in die eigentlich als <code>GenericBox&lt;String&gt;</code>
+                verwendete Box geschrieben werden. Beim Auslesen als <code>String</code>
+                entsteht die <code>ClassCastException</code>.
+            </p>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>6. Einschränkungen</h3>
+
+        <p>
+            a) Warum ist <code>new T()</code> in einer generischen Klasse nicht erlaubt?
+        </p>
+
+        <p>
+            b) Was passiert, wenn du <code>GenericBox&lt;String&gt;[]</code> erzeugen möchtest?
         </p>
 
         <button onclick="toggleSolution('hint6')">Hinweis anzeigen</button>
         <div id="hint6" class="solution">
             <p>
-                Weise zuerst eine <code>GenericBox&lt;String&gt;</code> einer
-                Raw-Type-Referenz zu und speichere danach einen
-                <code>Integer</code> hinein.
+                Denke daran, dass der konkrete Typ von <code>T</code> zur Laufzeit
+                durch Type Erasure nicht mehr bekannt ist.
             </p>
         </div>
 
         <button onclick="toggleSolution('solution6')">Lösung anzeigen</button>
         <div id="solution6" class="solution">
-            <pre class="copyable">GenericBox&lt;String&gt; stringBox = new GenericBox&lt;&gt;();
+            <p>
+                <strong>a)</strong> <code>new T()</code> ist nicht erlaubt, weil Java zur
+                Laufzeit nicht weiß, welcher konkrete Typ hinter <code>T</code> steckt.
+            </p>
 
-GenericBox rawBox = stringBox;
-rawBox.setValue(42);
-
-String text = stringBox.getValue();
-// ClassCastException</pre>
+            <pre class="copyable">// Compilerfehler:
+// T value = new T();</pre>
 
             <p>
-                Durch den Raw Type geht die Typsicherheit verloren.
-                Der Compiler kann nicht mehr verhindern, dass ein falscher
-                Typ in die Box geschrieben wird.
+                <strong>b)</strong> Auch ein Array mit einem konkreten generischen Typ
+                kann nicht direkt erzeugt werden.
             </p>
+
+            <pre class="copyable">// Compilerfehler:
+// GenericBox&lt;String&gt;[] boxes = new GenericBox&lt;String&gt;[10];</pre>
         </div>
     </article>
 
 
     <article>
-        <h3>Übung 7: Einschränkungen von Generics</h3>
+        <h3>7. Bounded Types</h3>
 
         <p>
-            Erkläre anhand der folgenden Beispiele, warum sie nicht erlaubt sind.
+            Erstelle eine Klasse <code>NumberBox&lt;T extends Number&gt;</code> mit einer
+            Methode <code>int intValue()</code>. Teste sie mit <code>Integer</code>
+            und <code>Double</code>.
         </p>
-
-        <pre class="copyable">// a)
-T value = new T();
-
-// b)
-GenericBox&lt;String&gt;[] boxes =
-        new GenericBox&lt;String&gt;[10];</pre>
 
         <button onclick="toggleSolution('hint7')">Hinweis anzeigen</button>
         <div id="hint7" class="solution">
             <p>
-                Denke bei a) an Type Erasure und bei b) an die Kombination
-                aus Arrays und generischen Typen.
+                Weil <code>T</code> mindestens ein <code>Number</code> ist, darfst du
+                Methoden von <code>Number</code> direkt verwenden.
             </p>
         </div>
 
         <button onclick="toggleSolution('solution7')">Lösung anzeigen</button>
         <div id="solution7" class="solution">
-            <p>
-                <strong>a)</strong> <code>new T()</code> ist nicht erlaubt,
-                weil der konkrete Typ von <code>T</code> zur Laufzeit nicht
-                bekannt ist.
-            </p>
-
-            <p>
-                <strong>b)</strong> Ein Array wie
-                <code>new GenericBox&lt;String&gt;[10]</code> darf nicht erzeugt werden.
-                Arrays kennen ihren Komponententyp zur Laufzeit, bei Generics
-                wird die Typinformation dagegen durch Type Erasure entfernt.
-            </p>
-        </div>
-    </article>
-
-
-    <article>
-        <h3>Übung 8: NumberBox mit Bounded Type</h3>
-
-        <p>
-            Erstelle eine Klasse <code>NumberBox&lt;T extends Number&gt;</code>
-            mit einer Methode <code>int intValue()</code>.
-            Teste die Klasse mit <code>Integer</code> und <code>Double</code>.
-        </p>
-
-        <button onclick="toggleSolution('hint8')">Hinweis anzeigen</button>
-        <div id="hint8" class="solution">
-            <p>
-                Weil <code>T</code> von <code>Number</code> abgeleitet sein muss,
-                kannst du <code>intValue()</code> direkt auf dem gespeicherten
-                Wert aufrufen.
-            </p>
-        </div>
-
-        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button>
-        <div id="solution8" class="solution">
             <pre class="copyable">public class NumberBox&lt;T extends Number&gt; {
     private T value;
 
@@ -817,12 +650,8 @@ GenericBox&lt;String&gt;[] boxes =
     }
 }</pre>
 
-            <pre class="copyable">NumberBox&lt;Integer&gt; intBox =
-        new NumberBox&lt;&gt;(42);
-
-NumberBox&lt;Double&gt; doubleBox =
-        new NumberBox&lt;&gt;(3.14);
-
+            <pre class="copyable">NumberBox&lt;Integer&gt; intBox = new NumberBox&lt;&gt;(42);
+NumberBox&lt;Double&gt; doubleBox = new NumberBox&lt;&gt;(3.14);
 System.out.println(intBox.intValue());
 System.out.println(doubleBox.intValue());</pre>
         </div>
@@ -830,67 +659,108 @@ System.out.println(doubleBox.intValue());</pre>
 
 
     <article>
-        <h3>Übung 9: Lower Bounded Wildcard</h3>
+        <h3>8. Upper Bounded Wildcards</h3>
 
         <p>
-            Implementiere eine Methode, die eine
-            <code>GenericBox&lt;? super Integer&gt;</code> entgegennimmt
-            und dort eine Zahl speichert.
+            Implementiere eine Methode <code>calculateSum</code>, die zwei
+            <code>GenericBox&lt;? extends Number&gt;</code> entgegennimmt und deren Werte
+            addiert. Kannst du in der Methode selbst mit <code>setValue()</code>
+            die übergebenen Werte überschreiben?
         </p>
 
-        <p>
-            Prüfe anschließend, welchen Typ du mit <code>getValue()</code>
-            ohne Cast sicher auslesen kannst.
-        </p>
-
-        <button onclick="toggleSolution('hint9')">Hinweis anzeigen</button>
-        <div id="hint9" class="solution">
+        <button onclick="toggleSolution('hint8')">Hinweis anzeigen</button>
+        <div id="hint8" class="solution">
             <p>
-                Ein <code>Integer</code> darf sicher geschrieben werden.
-                Beim Lesen ist nur <code>Object</code> garantiert.
+                Bei <code>? extends Number</code> ist der konkrete Untertyp unbekannt.
+                Lesen ist sicher, Schreiben eines konkreten Wertes nicht.
             </p>
         </div>
 
-        <button onclick="toggleSolution('solution9')">Lösung anzeigen</button>
-        <div id="solution9" class="solution">
-            <pre class="copyable">public static void storeInteger(
-        GenericBox&lt;? super Integer&gt; box) {
+        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button>
+        <div id="solution8" class="solution">
+            <p>
+                Weil <code>? extends Number</code> verwendet wird, weiß der Compiler
+                nicht, ob beide Boxen denselben konkreten Typ enthalten. Eine Box
+                könnte zum Beispiel <code>Integer</code>, die andere <code>Double</code>
+                enthalten.
+            </p>
 
-    box.setValue(42);
+            <p>
+                Deshalb darf kein konkreter Wert mit <code>setValue()</code>
+                hineingeschrieben werden (außer <code>null</code>). Herauslesen ist
+                dagegen sicher: Der Wert ist mindestens ein <code>Number</code>.
+                Daher stehen Methoden wie <code>doubleValue()</code> zur Verfügung.
+            </p>
 
-    Object value = box.getValue();
-    System.out.println(value);
+            <pre class="copyable">public static double calculateSum(GenericBox&lt;? extends Number&gt; b1, GenericBox&lt;? extends Number&gt; b2) {
+    // b1.setValue(44); // nicht erlaubt: der konkrete Untertyp von Number ist unbekannt
+    return b1.getValue().doubleValue() + b2.getValue().doubleValue();
 }</pre>
-
-            <p>
-                Eine direkte Zuweisung an <code>Integer</code> ist nicht sicher:
-            </p>
-
-            <pre class="copyable">// nicht erlaubt:
-Integer value = box.getValue();</pre>
-
-            <p>
-                Die Box könnte nämlich auch eine
-                <code>GenericBox&lt;Number&gt;</code> oder
-                <code>GenericBox&lt;Object&gt;</code> sein.
-            </p>
         </div>
     </article>
 
 
     <article>
-        <h3>Übung 10: Unbounded Wildcard</h3>
+        <h3>9. Lower Bounded Wildcards</h3>
 
         <p>
-            Implementiere eine Methode, die die Größe einer beliebigen Liste
-            zurückgibt. Verwende dafür <code>List&lt;?&gt;</code>.
+            Implementiere eine Methode, die eine
+            <code>GenericBox&lt;? super Integer&gt;</code> entgegennimmt und dort eine
+            Zahl speichert. Lies anschließend mit <code>getValue()</code> einen Wert aus.
+        </p>
+
+        <p>
+            <strong>Was ist dabei sicher möglich: Schreiben oder Lesen?</strong>
+        </p>
+
+        <button onclick="toggleSolution('hint9')">Hinweis anzeigen</button>
+        <div id="hint9" class="solution">
+            <p>
+                Bei <code>? super Integer</code> ist das Schreiben eines
+                <code>Integer</code> sicher. Beim Lesen ist nur <code>Object</code>
+                garantiert.
+            </p>
+        </div>
+
+        <button onclick="toggleSolution('solution9')">Lösung anzeigen</button>
+        <div id="solution9" class="solution">
+            <pre class="copyable">public static void storeInteger(GenericBox&lt;? super Integer&gt; box) {
+    box.setValue(42);
+    Object value = box.getValue();
+    System.out.println(value);
+}</pre>
+
+            <p>
+                <strong>Schreiben ist sicher:</strong> Ein <code>Integer</code> passt in
+                <code>GenericBox&lt;Integer&gt;</code>, <code>GenericBox&lt;Number&gt;</code>
+                und <code>GenericBox&lt;Object&gt;</code>.
+            </p>
+
+            <p>
+                <strong>Lesen ist nur als Object sicher:</strong>
+            </p>
+
+            <pre class="copyable">Object value = box.getValue();
+
+// nicht erlaubt:
+// Integer value = box.getValue();</pre>
+        </div>
+    </article>
+
+
+    <article>
+        <h3>10. Unbounded Wildcards</h3>
+
+        <p>
+            Implementiere eine Methode, die die Größe einer
+            <code>List&lt;?&gt;</code> zurückgibt.
         </p>
 
         <button onclick="toggleSolution('hint10')">Hinweis anzeigen</button>
         <div id="hint10" class="solution">
             <p>
-                Für <code>size()</code> musst du den konkreten Elementtyp
-                der Liste nicht kennen.
+                Für <code>size()</code> muss der konkrete Elementtyp der Liste
+                nicht bekannt sein.
             </p>
         </div>
 
@@ -900,71 +770,136 @@ Integer value = box.getValue();</pre>
     return list.size();
 }</pre>
 
-            <pre class="copyable">List&lt;String&gt; namen = List.of("Anna", "Max");
-List&lt;Integer&gt; zahlen = List.of(1, 2, 3);
+            <p>
+                Bei <code>List&lt;?&gt;</code> ist der konkrete Typ der Elemente unbekannt.
+                <code>list.get(0)</code> kann daher nur sicher als <code>Object</code>
+                verwendet werden. Der tatsächliche Wert kann natürlich zum Beispiel
+                trotzdem ein <code>String</code> sein.
+            </p>
 
-System.out.println(getSize(namen));
-System.out.println(getSize(zahlen));</pre>
+            <p>
+                Mit <code>list.add(...)</code> darf kein konkreter Wert hinzugefügt
+                werden (außer <code>null</code>), weil der tatsächliche Elementtyp
+                unbekannt ist. Methoden, die nicht vom Elementtyp abhängen, wie
+                <code>size()</code>, <code>isEmpty()</code> oder <code>clear()</code>,
+                können dagegen verwendet werden.
+            </p>
         </div>
     </article>
 
 
     <article>
-        <h3>Zusatzaufgabe 11: Comparable und Generics</h3>
+        <h3>11. Comparable und Generics</h3>
 
         <p>
-            Untersuche die folgende Methode:
+            Was macht die folgende Methode? Erkläre anhand des Beispiels, warum
+            <code>? super T</code> sinnvoll sein kann.
         </p>
 
-        <pre class="copyable">public static &lt;T extends Comparable&lt;? super T&gt;&gt;
-T test(List&lt;T&gt; list) {
-    ...
-}</pre>
-
-        <p>
-            Erkläre, was die Einschränkung
-            <code>T extends Comparable&lt;? super T&gt;</code> bedeutet
-            und zeige ein Beispiel mit einem passenden Datentyp.
-        </p>
+        <pre class="copyable">public static &lt;T extends Comparable&lt;? super T&gt;&gt; T test(List&lt;T&gt; list)</pre>
 
         <button onclick="toggleSolution('hint11')">Hinweis anzeigen</button>
         <div id="hint11" class="solution">
             <p>
-                Die Methode verlangt einen Typ <code>T</code>, dessen Objekte
-                miteinander verglichen werden können.
+                Vergleiche zuerst die strengere Variante
+                <code>&lt;T extends Comparable&lt;T&gt;&gt;</code> mit
+                <code>&lt;T extends Comparable&lt;? super T&gt;&gt;</code>.
             </p>
         </div>
 
         <button onclick="toggleSolution('solution11')">Lösung anzeigen</button>
         <div id="solution11" class="solution">
-            <p>
-                <code>T extends Comparable&lt;? super T&gt;</code> bedeutet:
-                <code>T</code> muss mit sich selbst oder mit einem Obertyp von
-                <code>T</code> vergleichbar sein.
-            </p>
+
+            <pre class="copyable">class Person {
+    String name;
+
+    Person(String name) {
+        this.name = name;
+    }
+}
+
+class Student extends Person implements Comparable&lt;Person&gt; {
+    Student(String name) {
+        super(name);
+    }
+
+    @Override
+    public int compareTo(Person other) {
+        return this.name.compareTo(other.name);
+    }
+}</pre>
 
             <p>
-                Dadurch kann die Methode innerhalb der Liste Werte mit
-                <code>compareTo(...)</code> vergleichen.
+                Zuerst die strengere Variante ohne <code>? super T</code>:
             </p>
 
-            <pre class="copyable">public static &lt;T extends Comparable&lt;? super T&gt;&gt;
-T test(List&lt;T&gt; list) {
+            <pre class="copyable">public static &lt;T extends Comparable&lt;T&gt;&gt; T test(List&lt;T&gt; list) {
     T max = list.get(0);
 
-    for (T value : list) {
-        if (value.compareTo(max) &gt; 0) {
-            max = value;
+    for (T elem : list) {
+        if (elem.compareTo(max) &gt; 0) {
+            max = elem;
         }
     }
 
     return max;
 }</pre>
 
-            <pre class="copyable">List&lt;Integer&gt; zahlen = List.of(4, 9, 2, 7);
+            <pre class="copyable">List&lt;Student&gt; studenten = List.of(new Student("Zoe"), new Student("Mike"));
 
-System.out.println(test(zahlen));
-// 9</pre>
+// Compilerfehler:
+// Student max = test(studenten);</pre>
+
+            <p>
+                Der Fehler entsteht, weil <code>Student</code>
+                <code>Comparable&lt;Person&gt;</code> implementiert und nicht
+                <code>Comparable&lt;Student&gt;</code>.
+            </p>
+
+            <p>
+                Mit <code>? super T</code> wird die Methode allgemeiner:
+            </p>
+
+            <pre class="copyable">public static &lt;T extends Comparable&lt;? super T&gt;&gt; T test(List&lt;T&gt; list) {
+    T max = list.get(0);
+
+    for (T elem : list) {
+        if (elem.compareTo(max) &gt; 0) {
+            max = elem;
+        }
+    }
+
+    return max;
+}</pre>
+
+            <pre class="copyable">List&lt;Student&gt; studenten = List.of(new Student("Zoe"), new Student("Mike"));
+Student max = test(studenten);
+System.out.println(max.name);</pre>
+
+            <p>
+                Für <code>T = Student</code> bedeutet
+                <code>Comparable&lt;? super T&gt;</code>, dass <code>Student</code>
+                mit <code>Student</code> oder einem Supertyp von
+                <code>Student</code> vergleichbar sein darf. Dazu gehört hier
+                <code>Person</code>.
+            </p>
+
+            <pre class="copyable">Student s = new Student("Anna");
+Person p = new Person("Bernd");
+int result = s.compareTo(p);</pre>
+
+            <p>
+                Ein <code>Student</code> kann in diesem Beispiel also nicht nur mit
+                einem <code>Student</code>, sondern auch mit einer
+                <code>Person</code> verglichen werden.
+            </p>
+
+            <p>
+                Bei Klassen wie <code>Integer</code> oder <code>Double</code>, die
+                sich selbst vergleichen, wäre auch die strengere Variante
+                <code>Comparable&lt;T&gt;</code> ausreichend. Die Variante mit
+                <code>? super T</code> ist aber allgemeiner.
+            </p>
         </div>
     </article>
 
