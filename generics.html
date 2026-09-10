@@ -602,7 +602,7 @@ String text = stringBox.getValue(); // ClassCastException</pre>
         <div id="solution6" class="solution">
             <p>
                 <strong>a)</strong> <code>new T()</code> ist nicht erlaubt, weil der Compiler nicht weiß, welcher konkrete Konstruktor 
-                für T aufgerufen werden soll. Durch Type Erasure steht der konkrete Typparameter außerdem zur Laufzeit nicht zur Verfügung. <code>T</code> steckt.
+                für T aufgerufen werden soll. Durch Type Erasure steht der konkrete Typparameter außerdem zur Laufzeit nicht zur Verfügung. 
             </p>
 
             <pre class="copyable">// Compilerfehler:
@@ -879,9 +879,9 @@ System.out.println(max.name);</pre>
             <p>
                 Für <code>T = Student</code> verlangt
                 <code>Comparable&lt;? super Student&gt;</code>, dass <code>Student</code>
-                mit <code>Student</code> oder einem Obertyp Supertyp von
+                mit <code>Student</code> oder einem Obertyp von
                 <code>Student</code> vergleichbar ist. 
-                <code>Person</code> ist ein Obertyp von Student - daher ist <code>Comparable&lt;Person&gt; erlaubt.</code>
+                <code>Person</code> ist ein Obertyp von <code>Student</code> - daher ist <code>Comparable&lt;Person&gt; erlaubt.</code>
             </p>
         
             <pre class="copyable">Student s = new Student("Anna");
