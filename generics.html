@@ -679,11 +679,12 @@ System.out.println(doubleBox.intValue());</pre>
         <button onclick="toggleSolution('solution8')">Lösung anzeigen</button>
         <div id="solution8" class="solution">
             <p>
-                Bei <code>? extends Number</code> weiß der Compiler nicht, weiß der Compiler
-                nicht, welcher konkrete Untertyp von Number in der jeweiligen Box verwendet wird. Eine Box
-                könnte zum Beispiel <code>Integer</code>, die andere <code>Double</code>
-                enthalten. Deshalb darf kein konkreter Wert hineingeschrieben werden (außer null).
+                Bei <code>? extends Number</code> weiß der Compiler nicht, welcher konkrete
+                Untertyp von <code>Number</code> in der jeweiligen Box verwendet wird.
+                Eine Box könnte zum Beispiel <code>Integer</code>, eine andere
+                <code>Double</code> enthalten.
             </p>
+            
             <p>
                 Deshalb darf kein konkreter Wert mit <code>setValue()</code>
                 hineingeschrieben werden (außer <code>null</code>). Herauslesen ist
@@ -791,7 +792,7 @@ System.out.println(doubleBox.intValue());</pre>
         <h3>11. Comparable und Generics</h3>
 
         <p>
-            Schreibe eine Methode test(), die aus einer Liste das größte Element ermittelt und zurückgibt. 
+            Schreibe eine Methode <code>test()</code>, die aus einer Liste das größte Element ermittelt und zurückgibt. 
             Die Elemente der Liste müssen miteinander vergleichbar sein. Erkläre anhand des Beispiels, warum
             <code>? super T</code> sinnvoll sein kann.
         </p>
@@ -881,7 +882,7 @@ System.out.println(max.name);</pre>
                 <code>Comparable&lt;? super Student&gt;</code>, dass <code>Student</code>
                 mit <code>Student</code> oder einem Obertyp von
                 <code>Student</code> vergleichbar ist. 
-                <code>Person</code> ist ein Obertyp von <code>Student</code> - daher ist <code>Comparable&lt;Person&gt; erlaubt.</code>
+                <code>Person</code> ist ein Obertyp von <code>Student</code> - daher ist <code>Comparable&lt;Person&gt;</code> erlaubt.
             </p>
         
             <pre class="copyable">Student s = new Student("Anna");
