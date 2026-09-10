@@ -811,22 +811,22 @@ System.out.println(doubleBox.intValue());</pre>
         <button onclick="toggleSolution('solution11')">Lösung anzeigen</button>
         <div id="solution11" class="solution">
 
-            <pre class="copyable">class Person {
+            <pre class="copyable">class Person implements Comparable&lt;Person&gt; {
     String name;
 
     Person(String name) {
         this.name = name;
     }
-}
-
-class Student extends Person implements Comparable&lt;Person&gt; {
-    Student(String name) {
-        super(name);
-    }
 
     @Override
     public int compareTo(Person other) {
         return this.name.compareTo(other.name);
+    }
+}
+
+class Student extends Person {
+    Student(String name) {
+        super(name);
     }
 }</pre>
 
