@@ -878,11 +878,11 @@ Student max = test(studenten);
 System.out.println(max.name);</pre>
 
             <p>
-                Für <code>T = Student</code> verlangt
-                <code>Comparable&lt;? super Student&gt;</code>, dass <code>Student</code>
-                mit <code>Student</code> oder einem Obertyp von
-                <code>Student</code> vergleichbar ist. 
-                <code>Person</code> ist ein Obertyp von <code>Student</code> - daher ist <code>Comparable&lt;Person&gt;</code> erlaubt.
+                Für <code>T = Student</code> verlangt <code>Comparable&lt;? super T&gt;</code>,
+                dass <code>Student</code> mit <code>Student</code> oder einem Obertyp von
+                <code>Student</code> vergleichbar ist.
+                <code>Person</code> ist ein Obertyp von <code>Student</code> –
+                daher erfüllt <code>Comparable&lt;Person&gt;</code> diese Bedingung.
             </p>
         
             <pre class="copyable">Student s = new Student("Anna");
