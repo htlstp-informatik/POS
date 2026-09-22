@@ -310,8 +310,14 @@ l.add("w");            // UnsupportedOperationException</pre></div></article>
 
     <article><h3>4. ConcurrentModification vermeiden</h3><p>Lösche aus einer <code>ArrayList&lt;String&gt;</code> alle Strings mit weniger als 5 Zeichen. Zeige zuerst, warum direktes <code>list.remove()</code> in einer for-each-Schleife problematisch ist, und löse die Aufgabe danach mit einem <code>Iterator</code>.</p><button onclick="toggleSolution('hint4')">Hinweis anzeigen</button><div id="hint4" class="solution"><p>Der Iterator muss die strukturelle Änderung selbst durchführen.</p></div>
 
-        <button onclick="toggleSolution('solution4')">Lösung anzeigen</button><div id="solution4" class="solution"><pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;(List.of("short", "looooong", "mini", "medium", "mi"));
-Iterator&lt;String&gt; it = list.iterator();
+        <button onclick="toggleSolution('solution4')">Lösung anzeigen</button><div id="solution4" class="solution"><p><strong>Falscher Ansatz:</strong> Die Liste wird direkt verändert, obwohl gerade über sie iteriert wird.</p><pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;(List.of("short", "looooong", "mini", "medium", "mi"));
+
+// FALSCH:
+for (String s : list) {
+    if (s.length() &lt; 5) {
+        list.remove(s); // ConcurrentModificationException
+    }
+}</pre><p><strong>Richtig:</strong> Das Entfernen erfolgt über denselben Iterator, der die Liste durchläuft.</p><pre class="copyable">Iterator&lt;String&gt; it = list.iterator();
 while (it.hasNext()) {
     if (it.next().length() &lt; 5) {
         it.remove();
