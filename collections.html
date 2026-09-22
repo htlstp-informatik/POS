@@ -275,8 +275,7 @@ personen.sort(null);</pre>
     <article>
         <h3>Comparator – alternative Ordnung</h3>
         <p>Ein <code>Comparator&lt;T&gt;</code> definiert eine Sortierregel <strong>außerhalb der Klasse</strong>. Dadurch können für denselben Typ unterschiedliche Sortierreihenfolgen verwendet werden.</p>
-        <pre class="copyable">Comparator&lt;Person&gt; byName =
-        Comparator.comparing(p -&gt; p.name);
+        <pre class="copyable">Comparator&lt;Person&gt; byName = Comparator.comparing(p -&gt; p.name);
 
 personen.sort(byName);</pre>
         <p><strong>Merksatz:</strong> <code>Comparable</code> definiert die natürliche Ordnung eines Typs. Ein <code>Comparator</code> definiert eine zusätzliche oder alternative Ordnung.</p>
