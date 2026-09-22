@@ -134,7 +134,14 @@ list.add("w"); // UnsupportedOperationException</pre>
     </article>
     <article>
         <h3>Iterator und ListIterator</h3>
-        <p>Während einer Iteration sollte die Collection nicht direkt strukturell verändert werden. Zum sicheren Löschen kann <code>Iterator.remove()</code> verwendet werden.</p>
+        <p>Während einer Iteration sollte die Collection nicht direkt strukturell verändert werden. Eine <code>for-each</code>-Schleife verwendet intern einen <code>Iterator</code>. Wird die Liste währenddessen direkt mit <code>list.remove()</code> verändert, kann der Iterator beim nächsten Zugriff eine <code>ConcurrentModificationException</code> auslösen.</p>
+        <pre class="copyable">// FALSCH:
+for (String s : list) {
+    if (s.length() &lt; 5) {
+        list.remove(s); // direkte Änderung während der Iteration
+    }
+}</pre>
+        <p>Zum sicheren Löschen wird die Änderung über denselben Iterator durchgeführt:</p>
         <pre class="copyable">Iterator&lt;String&gt; it = list.iterator();
 while (it.hasNext()) {
     if (it.next().length() &lt; 5) {
@@ -253,6 +260,24 @@ compareTo(other) == 0  // beide gelten für das TreeSet als gleich
 compareTo(other) &gt; 0   // dieses Element ist größer</pre>
         <p>Liefert <code>compareTo()</code> bzw. <code>Comparator.compare()</code> den Wert <code>0</code>, wird das zweite Element nicht eingefügt. Das gilt für das <code>TreeSet</code> auch dann, wenn <code>equals()</code> für die beiden Objekte <code>false</code> liefern würde. Daher sollte die natürliche Ordnung möglichst mit <code>equals()</code> konsistent sein.</p>
         <p>Bei eigenen Klassen gibt es zwei Möglichkeiten: Die Klasse implementiert <code>Comparable&lt;T&gt;</code> und definiert damit ihre natürliche Ordnung, oder dem <code>TreeSet</code> wird beim Erzeugen ein <code>Comparator&lt;T&gt;</code> übergeben.</p>
+        <pre class="copyable">class Person implements Comparable&lt;Person&gt; {
+    String name;
+
+    Person(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public int compareTo(Person other) {
+        return this.name.compareTo(other.name);
+    }
+}
+
+Set&lt;Person&gt; personen = new TreeSet&lt;&gt;();</pre>
+        <p>Alternativ kann die Sortierregel von außen vorgegeben werden:</p>
+        <pre class="copyable">Set&lt;Person&gt; personen = new TreeSet&lt;&gt;(
+        Comparator.comparing(p -&gt; p.name)
+);</pre>
     </article>
     <article>
         <h3>NavigableSet</h3>
@@ -315,7 +340,8 @@ l.add("w");            // UnsupportedOperationException</pre></div></article>
 // FALSCH:
 for (String s : list) {
     if (s.length() &lt; 5) {
-        list.remove(s); // ConcurrentModificationException
+        list.remove(s); // direkte Änderung während der Iteration
+                        // → kann zu ConcurrentModificationException führen
     }
 }</pre><p><strong>Richtig:</strong> Das Entfernen erfolgt über denselben Iterator, der die Liste durchläuft.</p><pre class="copyable">Iterator&lt;String&gt; it = list.iterator();
 while (it.hasNext()) {
