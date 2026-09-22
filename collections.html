@@ -287,22 +287,30 @@ Key → Value + nach Key sortiert?   → TreeMap</pre>
 <section id="uebungen" class="card">
     <h2>Übungen</h2>
 
-    <article><h3>1. List – Einfügen und Entfernen</h3><p>Erstelle eine <code>ArrayList&lt;String&gt;</code> mit <code>["apple", "banana", "cherry", "banana"]</code>. Füge <code>"dates"</code> an Index 1 ein und entferne anschließend das Element an Index 2. Gib die Liste vor und nach den Änderungen aus.</p><button onclick="toggleSolution('hint1')">Hinweis anzeigen</button><div id="hint1" class="solution"><p>Verwende <code>add(index, element)</code> und <code>remove(index)</code>.</p></div><button onclick="toggleSolution('solution1')">Lösung anzeigen</button><div id="solution1" class="solution"><pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;(List.of("apple", "banana", "cherry", "banana"));
+    <article><h3>1. List – Einfügen und Entfernen</h3><p>Erstelle eine <code>ArrayList&lt;String&gt;</code> mit <code>["apple", "banana", "cherry", "banana"]</code>. Füge <code>"dates"</code> an Index 1 ein und entferne anschließend das Element an Index 2. Gib die Liste vor und nach den Änderungen aus.</p><button onclick="toggleSolution('hint1')">Hinweis anzeigen</button><div id="hint1" class="solution"><p>Verwende <code>add(index, element)</code> und <code>remove(index)</code>.</p></div>
+
+        <button onclick="toggleSolution('solution1')">Lösung anzeigen</button><div id="solution1" class="solution"><pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;(List.of("apple", "banana", "cherry", "banana"));
 System.out.println(list);
 list.add(1, "dates");
 list.remove(2);
 System.out.println(list);</pre></div></article>
 
-    <article><h3>2. remove(Object) vs. remove(int)</h3><p>Erzeuge <code>List&lt;Integer&gt; nums = new ArrayList&lt;&gt;(List.of(1,2,3,2,4));</code>. Rufe zuerst <code>nums.remove(2)</code> und danach <code>nums.remove(Integer.valueOf(2))</code> auf. Erkläre den Unterschied.</p><button onclick="toggleSolution('hint2')">Hinweis anzeigen</button><div id="hint2" class="solution"><p>Bei <code>List</code> existieren zwei überladene <code>remove()</code>-Methoden.</p></div><button onclick="toggleSolution('solution2')">Lösung anzeigen</button><div id="solution2" class="solution"><pre class="copyable">nums.remove(2);                  // int: Index 2 → entfernt 3
+    <article><h3>2. remove(Object) vs. remove(int)</h3><p>Erzeuge <code>List&lt;Integer&gt; nums = new ArrayList&lt;&gt;(List.of(1,2,3,2,4));</code>. Rufe zuerst <code>nums.remove(2)</code> und danach <code>nums.remove(Integer.valueOf(2))</code> auf. Erkläre den Unterschied.</p><button onclick="toggleSolution('hint2')">Hinweis anzeigen</button><div id="hint2" class="solution"><p>Bei <code>List</code> existieren zwei überladene <code>remove()</code>-Methoden.</p></div>
+
+        <button onclick="toggleSolution('solution2')">Lösung anzeigen</button><div id="solution2" class="solution"><pre class="copyable">nums.remove(2);                  // int: Index 2 → entfernt 3
 nums.remove(Integer.valueOf(2)); // Object: entfernt erstes Vorkommen von 2</pre><p>Nach dem ersten Aufruf: <code>[1, 2, 2, 4]</code>, danach: <code>[1, 2, 4]</code>.</p></div></article>
 
-    <article><h3>3. Arrays.asList – Verbindung zum Array</h3><p>Erzeuge ein Array und daraus mit <code>Arrays.asList()</code> eine Liste. Ändere anschließend das Array und beobachte die Liste. Versuche danach, ein Element hinzuzufügen.</p><button onclick="toggleSolution('hint3')">Hinweis anzeigen</button><div id="hint3" class="solution"><p>Die Liste besitzt eine fixe Größe und verwendet das ursprüngliche Array als Speicher.</p></div><button onclick="toggleSolution('solution3')">Lösung anzeigen</button><div id="solution3" class="solution"><pre class="copyable">String[] a = {"x", "y", "z"};
+    <article><h3>3. Arrays.asList – Verbindung zum Array</h3><p>Erzeuge ein Array und daraus mit <code>Arrays.asList()</code> eine Liste. Ändere anschließend das Array und beobachte die Liste. Versuche danach, ein Element hinzuzufügen.</p><button onclick="toggleSolution('hint3')">Hinweis anzeigen</button><div id="hint3" class="solution"><p>Die Liste besitzt eine fixe Größe und verwendet das ursprüngliche Array als Speicher.</p></div>
+
+        <button onclick="toggleSolution('solution3')">Lösung anzeigen</button><div id="solution3" class="solution"><pre class="copyable">String[] a = {"x", "y", "z"};
 List&lt;String&gt; l = Arrays.asList(a);
 a[1] = "Y";
 System.out.println(l); // [x, Y, z]
 l.add("w");            // UnsupportedOperationException</pre></div></article>
 
-    <article><h3>4. ConcurrentModification vermeiden</h3><p>Lösche aus einer <code>ArrayList&lt;String&gt;</code> alle Strings mit weniger als 5 Zeichen. Zeige zuerst, warum direktes <code>list.remove()</code> in einer for-each-Schleife problematisch ist, und löse die Aufgabe danach mit einem <code>Iterator</code>.</p><button onclick="toggleSolution('hint4')">Hinweis anzeigen</button><div id="hint4" class="solution"><p>Der Iterator muss die strukturelle Änderung selbst durchführen.</p></div><button onclick="toggleSolution('solution4')">Lösung anzeigen</button><div id="solution4" class="solution"><pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;(List.of("short", "looooong", "mini", "medium", "mi"));
+    <article><h3>4. ConcurrentModification vermeiden</h3><p>Lösche aus einer <code>ArrayList&lt;String&gt;</code> alle Strings mit weniger als 5 Zeichen. Zeige zuerst, warum direktes <code>list.remove()</code> in einer for-each-Schleife problematisch ist, und löse die Aufgabe danach mit einem <code>Iterator</code>.</p><button onclick="toggleSolution('hint4')">Hinweis anzeigen</button><div id="hint4" class="solution"><p>Der Iterator muss die strukturelle Änderung selbst durchführen.</p></div>
+
+        <button onclick="toggleSolution('solution4')">Lösung anzeigen</button><div id="solution4" class="solution"><pre class="copyable">List&lt;String&gt; list = new ArrayList&lt;&gt;(List.of("short", "looooong", "mini", "medium", "mi"));
 Iterator&lt;String&gt; it = list.iterator();
 while (it.hasNext()) {
     if (it.next().length() &lt; 5) {
@@ -311,7 +319,9 @@ while (it.hasNext()) {
 }
 System.out.println(list); // [short, looooong, medium]</pre></div></article>
 
-    <article><h3>5. ListIterator – Einfügen während des Durchlaufens</h3><p>Füge beim Durchlaufen der Liste <code>["alpha", "beta", "atom", "gamma"]</code> hinter jedes Element, das mit <code>"a"</code> beginnt, sofort <code>"*"</code> ein. Warum reicht ein normaler <code>Iterator</code> dafür nicht?</p><button onclick="toggleSolution('hint5')">Hinweis anzeigen</button><div id="hint5" class="solution"><p><code>ListIterator</code> besitzt zusätzlich die Methode <code>add()</code>.</p></div><button onclick="toggleSolution('solution5')">Lösung anzeigen</button><div id="solution5" class="solution"><pre class="copyable">ListIterator&lt;String&gt; li = list.listIterator();
+    <article><h3>5. ListIterator – Einfügen während des Durchlaufens</h3><p>Füge beim Durchlaufen der Liste <code>["alpha", "beta", "atom", "gamma"]</code> hinter jedes Element, das mit <code>"a"</code> beginnt, sofort <code>"*"</code> ein. Warum reicht ein normaler <code>Iterator</code> dafür nicht?</p><button onclick="toggleSolution('hint5')">Hinweis anzeigen</button><div id="hint5" class="solution"><p><code>ListIterator</code> besitzt zusätzlich die Methode <code>add()</code>.</p></div>
+
+        <button onclick="toggleSolution('solution5')">Lösung anzeigen</button><div id="solution5" class="solution"><pre class="copyable">ListIterator&lt;String&gt; li = list.listIterator();
 while (li.hasNext()) {
     String s = li.next();
     if (s.startsWith("a")) {
@@ -319,12 +329,16 @@ while (li.hasNext()) {
     }
 }</pre><p>Das Interface <code>Iterator</code> bietet <code>remove()</code>, aber kein <code>add()</code> oder <code>set()</code>.</p></div></article>
 
-    <article><h3>6. equals()/hashCode() – Contract-Check</h3><p>Eine Klasse <code>Person</code> vergleicht in <code>equals()</code> die Felder <code>name</code> und <code>town</code>. <code>hashCode()</code> verwendet zunächst nur <code>name</code>. Verletzt das den Contract? Verbessere anschließend die Implementierung.</p><button onclick="toggleSolution('hint6')">Hinweis anzeigen</button><div id="hint6" class="solution"><p>Gleicher Hashcode verlangt nicht automatisch <code>equals() == true</code>.</p></div><button onclick="toggleSolution('solution6')">Lösung anzeigen</button><div id="solution6" class="solution"><p>Nein. Zwei ungleiche Objekte dürfen denselben Hashcode besitzen. Die Implementierung kann aber unnötig viele Kollisionen erzeugen. Sinnvoll ist:</p><pre class="copyable">@Override
+    <article><h3>6. equals()/hashCode() – Contract-Check</h3><p>Eine Klasse <code>Person</code> vergleicht in <code>equals()</code> die Felder <code>name</code> und <code>town</code>. <code>hashCode()</code> verwendet zunächst nur <code>name</code>. Verletzt das den Contract? Verbessere anschließend die Implementierung.</p><button onclick="toggleSolution('hint6')">Hinweis anzeigen</button><div id="hint6" class="solution"><p>Gleicher Hashcode verlangt nicht automatisch <code>equals() == true</code>.</p></div>
+
+        <button onclick="toggleSolution('solution6')">Lösung anzeigen</button><div id="solution6" class="solution"><p>Nein. Zwei ungleiche Objekte dürfen denselben Hashcode besitzen. Die Implementierung kann aber unnötig viele Kollisionen erzeugen. Sinnvoll ist:</p><pre class="copyable">@Override
 public int hashCode() {
     return Objects.hash(name, town);
 }</pre></div></article>
 
-    <article><h3>7. Comparable implementieren</h3><p>Implementiere <code>Comparable&lt;Employee&gt;</code>, sodass Mitarbeiter nach Namen natürlich sortiert werden. Sortiere anschließend eine Liste und erkläre die Bedeutung eines negativen, null bzw. positiven Rückgabewerts von <code>compareTo()</code>.</p><button onclick="toggleSolution('hint7')">Hinweis anzeigen</button><div id="hint7" class="solution"><p>Delegiere den Vergleich an <code>String.compareTo()</code>.</p></div><button onclick="toggleSolution('solution7')">Lösung anzeigen</button><div id="solution7" class="solution"><pre class="copyable">class Employee implements Comparable&lt;Employee&gt; {
+    <article><h3>7. Comparable implementieren</h3><p>Implementiere <code>Comparable&lt;Employee&gt;</code>, sodass Mitarbeiter nach Namen natürlich sortiert werden. Sortiere anschließend eine Liste und erkläre die Bedeutung eines negativen, null bzw. positiven Rückgabewerts von <code>compareTo()</code>.</p><button onclick="toggleSolution('hint7')">Hinweis anzeigen</button><div id="hint7" class="solution"><p>Delegiere den Vergleich an <code>String.compareTo()</code>.</p></div>
+
+        <button onclick="toggleSolution('solution7')">Lösung anzeigen</button><div id="solution7" class="solution"><pre class="copyable">class Employee implements Comparable&lt;Employee&gt; {
     String name;
 
     @Override
@@ -335,15 +349,21 @@ public int hashCode() {
 
 list.sort(null); // natürliche Ordnung</pre><p><code>&lt; 0</code>: davor, <code>0</code>: gleich in der Ordnung, <code>&gt; 0</code>: danach.</p></div></article>
 
-    <article><h3>8. Eigener Comparator</h3><p>Erstelle einen <code>Comparator&lt;Employee&gt;</code>, der primär nach <code>name</code> und bei gleichem Namen nach <code>yearsEmployed</code> aufsteigend sortiert. Vergleiche die Reihenfolge mit der natürlichen Ordnung.</p><button onclick="toggleSolution('hint8')">Hinweis anzeigen</button><div id="hint8" class="solution"><p>Verwende <code>Comparator.comparing()</code> und <code>thenComparingInt()</code>.</p></div><button onclick="toggleSolution('solution8')">Lösung anzeigen</button><div id="solution8" class="solution"><pre class="copyable">Comparator&lt;Employee&gt; cmp = Comparator
+    <article><h3>8. Eigener Comparator</h3><p>Erstelle einen <code>Comparator&lt;Employee&gt;</code>, der primär nach <code>name</code> und bei gleichem Namen nach <code>yearsEmployed</code> aufsteigend sortiert. Vergleiche die Reihenfolge mit der natürlichen Ordnung.</p><button onclick="toggleSolution('hint8')">Hinweis anzeigen</button><div id="hint8" class="solution"><p>Verwende <code>Comparator.comparing()</code> und <code>thenComparingInt()</code>.</p></div>
+
+        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button><div id="solution8" class="solution"><pre class="copyable">Comparator&lt;Employee&gt; cmp = Comparator
         .comparing((Employee e) -&gt; e.name)
         .thenComparingInt(e -&gt; e.yearsEmployed);
 
 list.sort(cmp);</pre><p>Die natürliche Ordnung stammt aus <code>compareTo()</code>. Ein <code>Comparator</code> kann unabhängig davon eine andere oder zusätzliche Sortierregel definieren.</p></div></article>
 
-    <article><h3>9. Hashtable, HashMap und ConcurrentHashMap</h3><p>Nenne drei Unterschiede zwischen <code>Hashtable</code> und <code>HashMap</code>. Wann ist <code>ConcurrentHashMap</code> vorzuziehen?</p><button onclick="toggleSolution('hint9')">Hinweis anzeigen</button><div id="hint9" class="solution"><p>Denke an Synchronisation, <code>null</code> und Legacy-Code.</p></div><button onclick="toggleSolution('solution9')">Lösung anzeigen</button><div id="solution9" class="solution"><ul><li><code>HashMap</code> ist nicht synchronisiert; <code>Hashtable</code> synchronisiert seine Methoden.</li><li><code>HashMap</code> erlaubt einen <code>null</code>-Key und <code>null</code>-Values; <code>Hashtable</code> erlaubt keine <code>null</code>-Keys oder -Values.</li><li><code>Hashtable</code> ist eine Legacy-Klasse; für neuen Code wird normalerweise <code>HashMap</code> verwendet.</li></ul><p>Wenn mehrere Threads gemeinsam auf eine Map zugreifen und Thread-Sicherheit erforderlich ist, ist häufig <code>ConcurrentHashMap</code> die passendere moderne Datenstruktur.</p></div></article>
+    <article><h3>9. Hashtable, HashMap und ConcurrentHashMap</h3><p>Nenne drei Unterschiede zwischen <code>Hashtable</code> und <code>HashMap</code>. Wann ist <code>ConcurrentHashMap</code> vorzuziehen?</p><button onclick="toggleSolution('hint9')">Hinweis anzeigen</button><div id="hint9" class="solution"><p>Denke an Synchronisation, <code>null</code> und Legacy-Code.</p></div>
 
-    <article><h3>10. HashSet vs. TreeSet</h3><p>Füge <code>"Banane"</code>, <code>"Apfel"</code>, <code>"Orange"</code> und <code>"Kiwi"</code> sowohl in ein <code>HashSet</code> als auch in ein <code>TreeSet</code> ein. Vergleiche die Ausgabe und erkläre den Unterschied.</p><button onclick="toggleSolution('hint10')">Hinweis anzeigen</button><div id="hint10" class="solution"><p>Nur eine der beiden Implementierungen garantiert eine Sortierreihenfolge.</p></div><button onclick="toggleSolution('solution10')">Lösung anzeigen</button><div id="solution10" class="solution"><pre class="copyable">Set&lt;String&gt; hashSet = new HashSet&lt;&gt;();
+        <button onclick="toggleSolution('solution9')">Lösung anzeigen</button><div id="solution9" class="solution"><ul><li><code>HashMap</code> ist nicht synchronisiert; <code>Hashtable</code> synchronisiert seine Methoden.</li><li><code>HashMap</code> erlaubt einen <code>null</code>-Key und <code>null</code>-Values; <code>Hashtable</code> erlaubt keine <code>null</code>-Keys oder -Values.</li><li><code>Hashtable</code> ist eine Legacy-Klasse; für neuen Code wird normalerweise <code>HashMap</code> verwendet.</li></ul><p>Wenn mehrere Threads gemeinsam auf eine Map zugreifen und Thread-Sicherheit erforderlich ist, ist häufig <code>ConcurrentHashMap</code> die passendere moderne Datenstruktur.</p></div></article>
+
+    <article><h3>10. HashSet vs. TreeSet</h3><p>Füge <code>"Banane"</code>, <code>"Apfel"</code>, <code>"Orange"</code> und <code>"Kiwi"</code> sowohl in ein <code>HashSet</code> als auch in ein <code>TreeSet</code> ein. Vergleiche die Ausgabe und erkläre den Unterschied.</p><button onclick="toggleSolution('hint10')">Hinweis anzeigen</button><div id="hint10" class="solution"><p>Nur eine der beiden Implementierungen garantiert eine Sortierreihenfolge.</p></div>
+
+        <button onclick="toggleSolution('solution10')">Lösung anzeigen</button><div id="solution10" class="solution"><pre class="copyable">Set&lt;String&gt; hashSet = new HashSet&lt;&gt;();
 hashSet.addAll(List.of("Banane", "Apfel", "Orange", "Kiwi"));
 
 Set&lt;String&gt; treeSet = new TreeSet&lt;&gt;(hashSet);
@@ -351,7 +371,9 @@ Set&lt;String&gt; treeSet = new TreeSet&lt;&gt;(hashSet);
 System.out.println(hashSet); // Reihenfolge nicht garantiert
 System.out.println(treeSet); // [Apfel, Banane, Kiwi, Orange]</pre><p>Wichtig: Eine konkrete Ausgabereihenfolge des <code>HashSet</code> darf nicht vorausgesetzt werden.</p></div></article>
 
-    <article><h3>11. Worthäufigkeit mit Map</h3><p>Analysiere den Text <code>"Dies ist ein Beispieltext. Dies ist ein einfaches Beispiel."</code> und zähle mit einer <code>Map&lt;String,Integer&gt;</code>, wie oft jedes Wort vorkommt.</p><button onclick="toggleSolution('hint11')">Hinweis anzeigen</button><div id="hint11" class="solution"><p>Normalisiere die Wörter und verwende <code>getOrDefault()</code>.</p></div><button onclick="toggleSolution('solution11')">Lösung anzeigen</button><div id="solution11" class="solution"><pre class="copyable">Map&lt;String, Integer&gt; wordCount = new HashMap&lt;&gt;();
+    <article><h3>11. Worthäufigkeit mit Map</h3><p>Analysiere den Text <code>"Dies ist ein Beispieltext. Dies ist ein einfaches Beispiel."</code> und zähle mit einer <code>Map&lt;String,Integer&gt;</code>, wie oft jedes Wort vorkommt.</p><button onclick="toggleSolution('hint11')">Hinweis anzeigen</button><div id="hint11" class="solution"><p>Normalisiere die Wörter und verwende <code>getOrDefault()</code>.</p></div>
+
+        <button onclick="toggleSolution('solution11')">Lösung anzeigen</button><div id="solution11" class="solution"><pre class="copyable">Map&lt;String, Integer&gt; wordCount = new HashMap&lt;&gt;();
 String text = "Dies ist ein Beispieltext. Dies ist ein einfaches Beispiel.";
 
 for (String word : text.split(" ")) {
@@ -361,7 +383,9 @@ for (String word : text.split(" ")) {
 
 System.out.println(wordCount);</pre></div></article>
 
-    <article><h3>12. Key/Value-Paare</h3><p>Speichere <code>1:"Banane"</code>, <code>2:"Apfel"</code>, <code>3:"Orange"</code> und <code>4:"Kiwi"</code> in einer Map. Prüfe einen Key, durchlaufe alle Paare, lösche einen Eintrag und gib anschließend alle Keys sowie alle Values aus.</p><button onclick="toggleSolution('hint12')">Hinweis anzeigen</button><div id="hint12" class="solution"><p>Verwende <code>containsKey()</code>, <code>entrySet()</code>, <code>remove()</code>, <code>keySet()</code> und <code>values()</code>.</p></div><button onclick="toggleSolution('solution12')">Lösung anzeigen</button><div id="solution12" class="solution"><pre class="copyable">Map&lt;Integer, String&gt; map = new HashMap&lt;&gt;();
+    <article><h3>12. Key/Value-Paare</h3><p>Speichere <code>1:"Banane"</code>, <code>2:"Apfel"</code>, <code>3:"Orange"</code> und <code>4:"Kiwi"</code> in einer Map. Prüfe einen Key, durchlaufe alle Paare, lösche einen Eintrag und gib anschließend alle Keys sowie alle Values aus.</p><button onclick="toggleSolution('hint12')">Hinweis anzeigen</button><div id="hint12" class="solution"><p>Verwende <code>containsKey()</code>, <code>entrySet()</code>, <code>remove()</code>, <code>keySet()</code> und <code>values()</code>.</p></div>
+
+        <button onclick="toggleSolution('solution12')">Lösung anzeigen</button><div id="solution12" class="solution"><pre class="copyable">Map&lt;Integer, String&gt; map = new HashMap&lt;&gt;();
 map.put(1, "Banane");
 map.put(2, "Apfel");
 map.put(3, "Orange");
