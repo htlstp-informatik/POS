@@ -244,22 +244,10 @@ System.out.println(alter.containsKey("Anna")); // true</pre>
 </section>
 
 <section id="sortiert" class="card">
-    <h2>Sortierte Collections</h2>
+    <h2>Sortieren: Comparable und Comparator</h2>
     <article>
-        <h3>TreeSet</h3>
-        <p>Ein <code>TreeSet</code> verwendet kein Hashing zur Ordnung. Die Elemente werden über <code>Comparable</code>/<code>compareTo()</code> oder einen <code>Comparator</code> verglichen.</p>
-        <pre class="copyable">Set&lt;String&gt; namen = new TreeSet&lt;&gt;();
-namen.add("Zoe");
-namen.add("Anna");
-namen.add("Max");
-
-// Iteration: Anna, Max, Zoe</pre>
-        <p>Der Vergleich bestimmt sowohl die <strong>Sortierreihenfolge</strong> als auch, ob ein Element für das <code>TreeSet</code> bereits vorhanden ist:</p>
-        <pre class="copyable">compareTo(other) &lt; 0   // dieses Element ist kleiner
-compareTo(other) == 0  // beide gelten für das TreeSet als gleich
-compareTo(other) &gt; 0   // dieses Element ist größer</pre>
-        <p>Liefert <code>compareTo()</code> bzw. <code>Comparator.compare()</code> den Wert <code>0</code>, wird das zweite Element nicht eingefügt. Das gilt für das <code>TreeSet</code> auch dann, wenn <code>equals()</code> für die beiden Objekte <code>false</code> liefern würde. Daher sollte die natürliche Ordnung möglichst mit <code>equals()</code> konsistent sein.</p>
-        <p>Bei eigenen Klassen gibt es zwei Möglichkeiten: Die Klasse implementiert <code>Comparable&lt;T&gt;</code> und definiert damit ihre natürliche Ordnung, oder dem <code>TreeSet</code> wird beim Erzeugen ein <code>Comparator&lt;T&gt;</code> übergeben.</p>
+        <h3>Comparable – natürliche Ordnung</h3>
+        <p><code>Comparable&lt;T&gt;</code> ist kein spezielles Konzept von <code>TreeSet</code>. Eine Klasse implementiert <code>Comparable</code>, wenn ihre Objekte eine <strong>natürliche Ordnung</strong> besitzen sollen.</p>
         <pre class="copyable">class Person implements Comparable&lt;Person&gt; {
     String name;
 
@@ -271,14 +259,48 @@ compareTo(other) &gt; 0   // dieses Element ist größer</pre>
     public int compareTo(Person other) {
         return this.name.compareTo(other.name);
     }
-}
+}</pre>
+        <p>Das Ergebnis von <code>compareTo()</code> beschreibt die Reihenfolge:</p>
+        <pre class="copyable">compareTo(other) &lt; 0   // this kommt vor other
+compareTo(other) == 0  // beide sind in der Ordnung gleich
+compareTo(other) &gt; 0   // this kommt nach other</pre>
+        <p>Diese natürliche Ordnung kann an verschiedenen Stellen verwendet werden, zum Beispiel beim Sortieren einer <code>List</code> oder bei sortierten Collections.</p>
+        <pre class="copyable">List&lt;Person&gt; personen = new ArrayList&lt;&gt;();
 
-Set&lt;Person&gt; personen = new TreeSet&lt;&gt;();</pre>
-        <p>Alternativ kann die Sortierregel von außen vorgegeben werden:</p>
+Collections.sort(personen);
+// oder:
+personen.sort(null);</pre>
+    </article>
+
+    <article>
+        <h3>Comparator – alternative Ordnung</h3>
+        <p>Ein <code>Comparator&lt;T&gt;</code> definiert eine Sortierregel <strong>außerhalb der Klasse</strong>. Dadurch können für denselben Typ unterschiedliche Sortierreihenfolgen verwendet werden.</p>
+        <pre class="copyable">Comparator&lt;Person&gt; byName =
+        Comparator.comparing(p -&gt; p.name);
+
+personen.sort(byName);</pre>
+        <p><strong>Merksatz:</strong> <code>Comparable</code> definiert die natürliche Ordnung eines Typs. Ein <code>Comparator</code> definiert eine zusätzliche oder alternative Ordnung.</p>
+    </article>
+
+    <article>
+        <h3>TreeSet</h3>
+        <p>Ein <code>TreeSet</code> speichert seine Elemente sortiert. Es verwendet dazu entweder die natürliche Ordnung der Elemente (<code>Comparable</code>) oder einen beim Erzeugen übergebenen <code>Comparator</code>.</p>
+        <pre class="copyable">Set&lt;String&gt; namen = new TreeSet&lt;&gt;();
+namen.add("Zoe");
+namen.add("Anna");
+namen.add("Max");
+
+// Iteration: Anna, Max, Zoe</pre>
+        <p>Bei einem <code>TreeSet</code> bestimmt der Vergleich nicht nur die Sortierreihenfolge, sondern auch, ob ein Element bereits vorhanden ist. Liefert <code>compareTo()</code> bzw. <code>Comparator.compare()</code> den Wert <code>0</code>, betrachtet das <code>TreeSet</code> die beiden Elemente als gleich und fügt das zweite Element nicht ein.</p>
+        <p>Dabei wird nicht zusätzlich mit <code>equals()</code> geprüft. Deshalb sollte die natürliche Ordnung möglichst so definiert sein, dass <code>compareTo() == 0</code> genau dann gilt, wenn auch <code>equals()</code> <code>true</code> liefert.</p>
+        <pre class="copyable">Set&lt;Person&gt; personen = new TreeSet&lt;&gt;();
+// verwendet Person.compareTo()</pre>
+        <p>Alternativ kann dem <code>TreeSet</code> eine andere Ordnung vorgegeben werden:</p>
         <pre class="copyable">Set&lt;Person&gt; personen = new TreeSet&lt;&gt;(
         Comparator.comparing(p -&gt; p.name)
 );</pre>
     </article>
+
     <article>
         <h3>NavigableSet</h3>
         <p><code>NavigableSet</code> ist ein Interface für sortierte Mengen mit zusätzlichen Navigationsmethoden. <code>TreeSet</code> implementiert <code>NavigableSet</code>.</p>
@@ -290,9 +312,12 @@ zahlen.floor(30);   // 30
 zahlen.ceiling(25); // 30
 zahlen.higher(30);  // 40</pre>
     </article>
+
     <article>
         <h3>TreeMap</h3>
-        <p>Eine <code>TreeMap</code> speichert Schlüssel-Wert-Paare sortiert nach den Keys. Die Keys benötigen eine natürliche Ordnung oder einen <code>Comparator</code>.</p>
+        <p>Eine <code>TreeMap</code> speichert Schlüssel-Wert-Paare sortiert nach den Keys. Auch hier stammt die Ordnung entweder aus <code>Comparable</code> oder aus einem übergebenen <code>Comparator</code>.</p>
+        <pre class="copyable">Map&lt;Person, String&gt; map = new TreeMap&lt;&gt;();
+// verwendet die natürliche Ordnung von Person</pre>
     </article>
 </section>
 
