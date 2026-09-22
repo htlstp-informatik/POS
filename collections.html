@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Collections</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>Java Collections</h1>
+    <p>Daten strukturiert speichern, suchen und verarbeiten</p>
+</header>
+<nav>
+    <a href="index.html">Start</a>
+    <a href="#framework">Framework</a>
+    <a href="#collection">Collection</a>
+    <a href="#list">List</a>
+    <a href="#set">Set</a>
+    <a href="#hashing">Hashing</a>
+    <a href="#map">Map</a>
+    <a href="#sortiert">Sortierte Collections</a>
+    <a href="#auswahl">Auswahl</a>
+    <a href="#uebungen">Übungen</a>
+</nav>
+<main>
+<section id="start" class="intro">
+    <h2>Was ist das Java Collections Framework?</h2>
+    <p>Das Java Collections Framework stellt Interfaces und Klassen bereit, mit denen Gruppen von Objekten gespeichert und verarbeitet werden können. Generics legen dabei fest, welcher Elementtyp erlaubt ist.</p>
+    <pre class="copyable">List&lt;String&gt; namen = new ArrayList&lt;&gt;();
+namen.add("Anna");
+namen.add("Max");</pre>
+    <p>Je nach Anforderung verwendet man unterschiedliche Datenstrukturen: Listen, Mengen oder Zuordnungen von Schlüsseln zu Werten.</p>
+</section>
+
+<section id="framework" class="card">
+    <h2>Überblick über das Collections Framework</h2>
+    <article>
+        <pre class="copyable">Iterable&lt;E&gt;
+   └── Collection&lt;E&gt;
+       ├── List&lt;E&gt;
+       │   └── ArrayList&lt;E&gt;
+       ├── Set&lt;E&gt;
+       │   ├── HashSet&lt;E&gt;
+       │   ├── LinkedHashSet&lt;E&gt;
+       │   └── SortedSet&lt;E&gt;
+       │       └── NavigableSet&lt;E&gt;
+       │           └── TreeSet&lt;E&gt;
+       └── Queue&lt;E&gt;
+
+Map&lt;K,V&gt;                 // gehört NICHT zu Collection
+   ├── HashMap&lt;K,V&gt;
+   ├── LinkedHashMap&lt;K,V&gt;
+   └── TreeMap&lt;K,V&gt;</pre>
+        <p><code>Collection&lt;E&gt;</code> ist das zentrale Interface für Sammlungen einzelner Elemente. <code>Map&lt;K,V&gt;</code> gehört zwar zum Collections Framework, ist aber keine Unterklasse bzw. kein Unterinterface von <code>Collection</code>.</p>
+    </article>
+</section>
+
+<section id="collection" class="card">
+    <h2>Das Interface Collection&lt;E&gt;</h2>
+    <article>
+        <p><code>E</code> steht für den Elementtyp. Bei <code>Collection&lt;String&gt;</code> ist also <code>E = String</code>.</p>
+        <pre class="copyable">public interface Collection&lt;E&gt; extends Iterable&lt;E&gt; {
+    int size();
+    boolean isEmpty();
+    boolean contains(Object o);
+    Iterator&lt;E&gt; iterator();
+    boolean add(E e);
+    boolean remove(Object o);
+    boolean containsAll(Collection&lt;?&gt; c);
+    boolean addAll(Collection&lt;? extends E&gt; c);
+    void clear();
+}</pre>
+    </article>
+    <article>
+        <h3>Warum bei addAll ? extends E?</h3>
+        <pre class="copyable">Collection&lt;Number&gt; zahlen = new ArrayList&lt;&gt;();
+Collection&lt;Integer&gt; ganzeZahlen = List.of(1, 2, 3);
+
+zahlen.addAll(ganzeZahlen);</pre>
+        <p>Ein <code>Integer</code> ist ein <code>Number</code>, aber <code>Collection&lt;Integer&gt;</code> ist keine <code>Collection&lt;Number&gt;</code>. Durch <code>? extends E</code> darf <code>addAll</code> auch Collections mit Untertypen von <code>E</code> übernehmen.</p>
+    </article>
+</section>
+
+<section id="list" class="card">
+    <h2>List und ArrayList</h2>
+    <article>
+        <p>Eine <code>List</code> speichert Elemente in einer Reihenfolge. Duplikate sind erlaubt und auf Elemente kann über einen Index zugegriffen werden.</p>
+        <pre class="copyable">List&lt;String&gt; namen = new ArrayList&lt;&gt;();
+namen.add("Anna");
+namen.add("Max");
+namen.add("Anna");
+
+System.out.println(namen.get(1)); // Max
+System.out.println(namen.size()); // 3</pre>
+        <ul>
+            <li>Reihenfolge bleibt erhalten</li>
+            <li>Duplikate sind erlaubt</li>
+            <li>Zugriff über Index</li>
+            <li><code>ArrayList</code>: schneller wahlfreier Zugriff</li>
+        </ul>
+    </article>
+</section>
+
+<section id="set" class="card">
+    <h2>Set</h2>
+    <article>
+        <p>Ein <code>Set</code> speichert jedes Element höchstens einmal. Wie Gleichheit und Reihenfolge bestimmt werden, hängt von der Implementierung ab.</p>
+        <pre class="copyable">Set&lt;String&gt; namen = new HashSet&lt;&gt;();
+namen.add("Anna");
+namen.add("Max");
+namen.add("Anna");
+
+System.out.println(namen.size()); // 2</pre>
+    </article>
+    <article>
+        <h3>Wichtige Set-Implementierungen</h3>
+        <ul>
+            <li><code>HashSet</code>: Hashing, keine garantierte Reihenfolge</li>
+            <li><code>LinkedHashSet</code>: Hashing + Einfügereihenfolge</li>
+            <li><code>TreeSet</code>: sortiert nach natürlicher Ordnung oder Comparator</li>
+        </ul>
+    </article>
+</section>
+
+<section id="hashing" class="card">
+    <h2>Hashing</h2>
+    <article>
+        <h3>Grundidee</h3>
+        <pre class="copyable">Objekt / Key
+     ↓
+ hashCode()
+     ↓
+Bucket bestimmen
+     ↓
+Hashwert vergleichen
+     ↓
+bei gleichem Hashwert:
+   equals()</pre>
+        <p>Der Hashcode hilft dabei, den Suchbereich stark einzuschränken. Mehrere Elemente dürfen im selben Bucket liegen. Haben Kandidaten denselben Hashwert, entscheidet <code>equals()</code>, ob sie tatsächlich gleich sind.</p>
+    </article>
+    <article>
+        <h3>Hash-Kollision</h3>
+        <pre class="copyable">a.hashCode() == b.hashCode()
+a.equals(b) == false</pre>
+        <p>Das ist eine Hash-Kollision: Zwei verschiedene Objekte besitzen denselben Hashcode. Beide dürfen gespeichert werden.</p>
+    </article>
+    <article>
+        <h3>Vertrag von equals() und hashCode()</h3>
+        <pre class="copyable">a.equals(b) == true
+→ a.hashCode() == b.hashCode()   // muss gelten
+
+a.hashCode() == b.hashCode()
+→ a.equals(b) kann true oder false sein</pre>
+    </article>
+    <article>
+        <h3>HashSet und eigene Klassen</h3>
+        <p>Bei eigenen Klassen sollten für die Verwendung in einem <code>HashSet</code> <code>equals()</code> und <code>hashCode()</code> passend überschrieben werden.</p>
+        <pre class="copyable">@Override
+public boolean equals(Object o) {
+    ...
+}
+
+@Override
+public int hashCode() {
+    ...
+}</pre>
+    </article>
+</section>
+
+<section id="map" class="card">
+    <h2>Map und HashMap</h2>
+    <article>
+        <p>Eine <code>Map</code> speichert Schlüssel-Wert-Paare. Jeder Schlüssel ist eindeutig. Bei einer <code>HashMap</code> werden <code>hashCode()</code> und <code>equals()</code> des <strong>Keys</strong> verwendet.</p>
+        <pre class="copyable">Map&lt;String, Integer&gt; alter = new HashMap&lt;&gt;();
+
+alter.put("Anna", 17);
+alter.put("Max", 18);
+
+System.out.println(alter.get("Max"));       // 18
+System.out.println(alter.containsKey("Anna")); // true</pre>
+    </article>
+    <article>
+        <h3>Zusammenhang HashSet und HashMap</h3>
+        <p>Ein <code>HashSet</code> verwendet intern eine <code>HashMap</code>. Die Set-Elemente werden dabei als Keys gespeichert; der zugehörige Wert ist intern nur ein Dummy-Wert.</p>
+        <pre class="copyable">HashSet:  Element
+             ↓
+         Key einer internen HashMap</pre>
+    </article>
+    <article>
+        <h3>LinkedHashMap</h3>
+        <p><code>LinkedHashMap</code> verwendet ebenfalls Hashing, führt aber zusätzlich eine verkettete Reihenfolge. Standardmäßig entspricht sie der Einfügereihenfolge.</p>
+    </article>
+</section>
+
+<section id="sortiert" class="card">
+    <h2>Sortierte Collections</h2>
+    <article>
+        <h3>TreeSet</h3>
+        <p>Ein <code>TreeSet</code> verwendet kein Hashing zur Ordnung. Die Elemente werden über <code>Comparable</code>/<code>compareTo()</code> oder einen <code>Comparator</code> verglichen.</p>
+        <pre class="copyable">Set&lt;String&gt; namen = new TreeSet&lt;&gt;();
+namen.add("Zoe");
+namen.add("Anna");
+namen.add("Max");
+
+// Iteration: Anna, Max, Zoe</pre>
+        <p>Für die Gleichheit innerhalb des <code>TreeSet</code> ist entscheidend, ob der Vergleich <code>0</code> liefert.</p>
+    </article>
+    <article>
+        <h3>NavigableSet</h3>
+        <p><code>NavigableSet</code> ist ein Interface für sortierte Mengen mit zusätzlichen Navigationsmethoden. <code>TreeSet</code> implementiert <code>NavigableSet</code>.</p>
+        <pre class="copyable">NavigableSet&lt;Integer&gt; zahlen = new TreeSet&lt;&gt;();
+zahlen.addAll(List.of(10, 20, 30, 40));
+
+zahlen.lower(30);   // 20
+zahlen.floor(30);   // 30
+zahlen.ceiling(25); // 30
+zahlen.higher(30);  // 40</pre>
+    </article>
+    <article>
+        <h3>TreeMap</h3>
+        <p>Eine <code>TreeMap</code> speichert Schlüssel-Wert-Paare sortiert nach den Keys. Die Keys benötigen eine natürliche Ordnung oder einen <code>Comparator</code>.</p>
+    </article>
+</section>
+
+<section id="auswahl" class="card">
+    <h2>Welche Datenstruktur verwende ich?</h2>
+    <article>
+        <pre class="copyable">Duplikate + Index benötigt?        → ArrayList
+Keine Duplikate, schnell suchen?   → HashSet
+Keine Duplikate + Einfügereihenfolge? → LinkedHashSet
+Keine Duplikate + sortiert?        → TreeSet
+Key → Value, schnell suchen?       → HashMap
+Key → Value + Einfügereihenfolge?  → LinkedHashMap
+Key → Value + nach Key sortiert?   → TreeMap</pre>
+    </article>
+</section>
+
+<section id="uebungen" class="card">
+    <h2>Übungen</h2>
+
+    <article>
+        <h3>1. List oder Set?</h3>
+        <p>Eine Anwendung soll die Namen aller angemeldeten Benutzer speichern. Ein Name darf nur einmal vorkommen. Welche Schnittstelle ist geeigneter: <code>List</code> oder <code>Set</code>?</p>
+        <button onclick="toggleSolution('hint1')">Hinweis anzeigen</button>
+        <div id="hint1" class="solution"><p>Überlege, ob Duplikate erlaubt sein sollen.</p></div>
+        <button onclick="toggleSolution('solution1')">Lösung anzeigen</button>
+        <div id="solution1" class="solution"><p>Ein <code>Set</code> ist geeigneter, weil jedes Element höchstens einmal enthalten sein kann.</p></div>
+    </article>
+
+    <article>
+        <h3>2. ArrayList</h3>
+        <p>Erstelle eine <code>ArrayList&lt;String&gt;</code>, füge drei Namen hinzu und gib das zweite Element sowie die Anzahl der Elemente aus.</p>
+        <button onclick="toggleSolution('hint2')">Hinweis anzeigen</button>
+        <div id="hint2" class="solution"><p>Der Index beginnt bei <code>0</code>.</p></div>
+        <button onclick="toggleSolution('solution2')">Lösung anzeigen</button>
+        <div id="solution2" class="solution"><pre class="copyable">List&lt;String&gt; namen = new ArrayList&lt;&gt;();
+namen.add("Anna");
+namen.add("Max");
+namen.add("Zoe");
+
+System.out.println(namen.get(1));
+System.out.println(namen.size());</pre></div>
+    </article>
+
+    <article>
+        <h3>3. HashSet und Duplikate</h3>
+        <p>Was wird ausgegeben?</p>
+        <pre class="copyable">Set&lt;String&gt; set = new HashSet&lt;&gt;();
+set.add("Max");
+set.add("Anna");
+set.add("Max");
+System.out.println(set.size());</pre>
+        <button onclick="toggleSolution('hint3')">Hinweis anzeigen</button>
+        <div id="hint3" class="solution"><p>Ein <code>Set</code> speichert keine doppelten Elemente.</p></div>
+        <button onclick="toggleSolution('solution3')">Lösung anzeigen</button>
+        <div id="solution3" class="solution"><p>Die Ausgabe ist <code>2</code>. Der zweite Einfügeversuch von <code>"Max"</code> erzeugt kein zusätzliches Element.</p></div>
+    </article>
+
+    <article>
+        <h3>4. Hashing</h3>
+        <p>Erkläre den Unterschied zwischen <code>hashCode()</code> und <code>equals()</code>. Wann spricht man von einer Hash-Kollision?</p>
+        <button onclick="toggleSolution('hint4')">Hinweis anzeigen</button>
+        <div id="hint4" class="solution"><p>Der Hashcode grenzt die Suche ein. Gleicher Hashcode bedeutet noch nicht automatisch gleiche Objekte.</p></div>
+        <button onclick="toggleSolution('solution4')">Lösung anzeigen</button>
+        <div id="solution4" class="solution"><p><code>hashCode()</code> liefert den Hashwert, aus dem die Hash-Tabelle den Suchbereich bestimmt. Bei gleichem Hashwert kann <code>equals()</code> die tatsächliche Gleichheit prüfen. Eine Hash-Kollision liegt vor, wenn zwei laut <code>equals()</code> verschiedene Objekte denselben Hashcode besitzen.</p></div>
+    </article>
+
+    <article>
+        <h3>5. equals() und hashCode()</h3>
+        <p>Welche Aussagen müssen bzw. können gelten?</p>
+        <pre class="copyable">a.equals(b) == true
+
+a.hashCode() == b.hashCode()</pre>
+        <button onclick="toggleSolution('hint5')">Hinweis anzeigen</button>
+        <div id="hint5" class="solution"><p>Die Richtung der Schlussfolgerung ist entscheidend.</p></div>
+        <button onclick="toggleSolution('solution5')">Lösung anzeigen</button>
+        <div id="solution5" class="solution"><pre class="copyable">a.equals(b) == true
+→ gleicher hashCode() MUSS gelten
+
+gleicher hashCode()
+→ equals() kann true ODER false sein</pre></div>
+    </article>
+
+    <article>
+        <h3>6. HashMap</h3>
+        <p>Speichere zu drei Schülernamen jeweils eine Punktezahl in einer <code>HashMap</code>. Gib anschließend die Punkte eines bestimmten Schülers aus.</p>
+        <button onclick="toggleSolution('hint6')">Hinweis anzeigen</button>
+        <div id="hint6" class="solution"><p>Verwende <code>put()</code> zum Speichern und <code>get()</code> zum Lesen.</p></div>
+        <button onclick="toggleSolution('solution6')">Lösung anzeigen</button>
+        <div id="solution6" class="solution"><pre class="copyable">Map&lt;String, Integer&gt; punkte = new HashMap&lt;&gt;();
+punkte.put("Anna", 18);
+punkte.put("Max", 15);
+punkte.put("Zoe", 20);
+
+System.out.println(punkte.get("Max"));</pre></div>
+    </article>
+
+    <article>
+        <h3>7. HashSet oder TreeSet?</h3>
+        <p>Du möchtest eindeutige Namen speichern und bei der Ausgabe automatisch alphabetisch sortiert erhalten. Welche Implementierung verwendest du?</p>
+        <button onclick="toggleSolution('hint7')">Hinweis anzeigen</button>
+        <div id="hint7" class="solution"><p>Welche Set-Implementierung arbeitet mit einer Sortierreihenfolge?</p></div>
+        <button onclick="toggleSolution('solution7')">Lösung anzeigen</button>
+        <div id="solution7" class="solution"><p><code>TreeSet</code>. Es speichert eindeutige Elemente sortiert und verwendet dafür die natürliche Ordnung oder einen <code>Comparator</code>.</p></div>
+    </article>
+
+    <article>
+        <h3>8. Comparable bei TreeSet</h3>
+        <p>Eine eigene Klasse <code>Person</code> soll in einem <code>TreeSet&lt;Person&gt;</code> nach Namen sortiert werden. Ergänze die notwendige Schnittstelle und Methode.</p>
+        <button onclick="toggleSolution('hint8')">Hinweis anzeigen</button>
+        <div id="hint8" class="solution"><p>Verwende <code>Comparable&lt;Person&gt;</code> und <code>compareTo()</code>.</p></div>
+        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button>
+        <div id="solution8" class="solution"><pre class="copyable">class Person implements Comparable&lt;Person&gt; {
+    private String name;
+
+    Person(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public int compareTo(Person other) {
+        return this.name.compareTo(other.name);
+    }
+}</pre></div>
+    </article>
+
+    <article>
+        <h3>9. LinkedHashSet</h3>
+        <p>Was ist der wesentliche Unterschied zwischen <code>HashSet</code> und <code>LinkedHashSet</code>?</p>
+        <button onclick="toggleSolution('hint9')">Hinweis anzeigen</button>
+        <div id="hint9" class="solution"><p>Beide verwenden Hashing. Denke an die Reihenfolge.</p></div>
+        <button onclick="toggleSolution('solution9')">Lösung anzeigen</button>
+        <div id="solution9" class="solution"><p><code>LinkedHashSet</code> verwendet wie <code>HashSet</code> Hashing, merkt sich zusätzlich aber die Einfügereihenfolge der Elemente.</p></div>
+    </article>
+
+    <article>
+        <h3>10. Collection und Generics</h3>
+        <p>Warum funktioniert der folgende Aufruf?</p>
+        <pre class="copyable">Collection&lt;Number&gt; zahlen = new ArrayList&lt;&gt;();
+Collection&lt;Integer&gt; ints = List.of(1, 2, 3);
+zahlen.addAll(ints);</pre>
+        <button onclick="toggleSolution('hint10')">Hinweis anzeigen</button>
+        <div id="hint10" class="solution"><p>Sieh dir die Signatur <code>addAll(Collection&lt;? extends E&gt; c)</code> an.</p></div>
+        <button onclick="toggleSolution('solution10')">Lösung anzeigen</button>
+        <div id="solution10" class="solution"><p>Bei <code>Collection&lt;Number&gt;</code> ist <code>E = Number</code>. <code>? extends Number</code> erlaubt eine Collection von <code>Number</code> oder einem Untertyp, also auch <code>Collection&lt;Integer&gt;</code>.</p></div>
+    </article>
+</section>
+</main>
+<footer><p>Java Collections</p></footer>
+<script src="script.js"></script>
+</body>
+</html>
