@@ -296,8 +296,7 @@ namen.add("Max");
         <pre class="copyable">Set&lt;Person&gt; personen = new TreeSet&lt;&gt;();
 // verwendet Person.compareTo()</pre>
         <p>Alternativ kann dem <code>TreeSet</code> eine andere Ordnung vorgegeben werden:</p>
-        <pre class="copyable">Set&lt;Person&gt; personen = new TreeSet&lt;&gt;(
-        Comparator.comparing(p -&gt; p.name)
+        <pre class="copyable">Set&lt;Person&gt; personen = new TreeSet&lt;&gt;(Comparator.comparing(p -&gt; p.name)
 );</pre>
     </article>
 
