@@ -403,13 +403,23 @@ public int hashCode() {
 
 list.sort(null); // natürliche Ordnung</pre><p><code>&lt; 0</code>: davor, <code>0</code>: gleich in der Ordnung, <code>&gt; 0</code>: danach.</p></div></article>
 
-    <article><h3>8. Eigener Comparator</h3><p>Erstelle einen <code>Comparator&lt;Employee&gt;</code>, der primär nach <code>name</code> und bei gleichem Namen nach <code>yearsEmployed</code> aufsteigend sortiert. Vergleiche die Reihenfolge mit der natürlichen Ordnung.</p><button onclick="toggleSolution('hint8')">Hinweis anzeigen</button><div id="hint8" class="solution"><p>Verwende <code>Comparator.comparing()</code> und <code>thenComparingInt()</code>.</p></div>
+    <article><h3>8. Eigener Comparator</h3><p>Erstelle eine eigene Klasse <code>EmployeeComparator</code>, die <code>Comparator&lt;Employee&gt;</code> implementiert. Sortiere die Mitarbeiter primär nach <code>name</code> und bei gleichem Namen nach <code>yearsEmployed</code> aufsteigend. Vergleiche die Reihenfolge mit der natürlichen Ordnung aus Aufgabe 7.</p><button onclick="toggleSolution('hint8')">Hinweis anzeigen</button><div id="hint8" class="solution"><p>Implementiere <code>Comparator&lt;Employee&gt;</code> und überschreibe die Methode <code>compare(Employee e1, Employee e2)</code>. Vergleiche zuerst die Namen mit <code>compareTo()</code>. Sind sie gleich, vergleiche die Dienstjahre mit <code>Integer.compare()</code>.</p></div>
 
-        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button><div id="solution8" class="solution"><pre class="copyable">Comparator&lt;Employee&gt; cmp = Comparator
-        .comparing((Employee e) -&gt; e.name)
-        .thenComparingInt(e -&gt; e.yearsEmployed);
+        <button onclick="toggleSolution('solution8')">Lösung anzeigen</button><div id="solution8" class="solution"><pre class="copyable">import java.util.Comparator;
 
-list.sort(cmp);</pre><p>Die natürliche Ordnung stammt aus <code>compareTo()</code>. Ein <code>Comparator</code> kann unabhängig davon eine andere oder zusätzliche Sortierregel definieren.</p></div></article>
+class EmployeeComparator implements Comparator&lt;Employee&gt; {
+    @Override
+    public int compare(Employee e1, Employee e2) {
+        int result = e1.name.compareTo(e2.name);
+
+        if (result == 0) {
+            return Integer.compare(e1.yearsEmployed, e2.yearsEmployed);
+        }
+
+        return result;
+    }
+}</pre><p>Verwendung mit der Mitarbeiterliste:</p><pre class="copyable">list.sort(null);                     // natürliche Ordnung aus Aufgabe 7
+list.sort(new EmployeeComparator()); // eigener Comparator</pre><p>Die natürliche Ordnung aus Aufgabe 7 vergleicht mit <code>compareTo()</code> nur die Namen. Der eigene Comparator vergleicht bei gleichem Namen zusätzlich die Dienstjahre aufsteigend. Die Vergleichslogik steht in einer eigenen Klasse in der Methode <code>compare()</code>.</p></div></article>
 
     <article><h3>9. Hashtable, HashMap und ConcurrentHashMap</h3><p>Nenne drei Unterschiede zwischen <code>Hashtable</code> und <code>HashMap</code>. Wann ist <code>ConcurrentHashMap</code> vorzuziehen?</p><button onclick="toggleSolution('hint9')">Hinweis anzeigen</button><div id="hint9" class="solution"><p>Denke an Synchronisation, <code>null</code> und Legacy-Code.</p></div>
 
