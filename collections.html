@@ -196,6 +196,38 @@ a.equals(b) == false</pre>
         <p>Das ist eine Hash-Kollision: Zwei verschiedene Objekte besitzen denselben Hashcode. Beide dürfen gespeichert werden.</p>
     </article>
     <article>
+        <h3>Hash-Kollision: "FB" und "Ea"</h3>
+        <p>Die unterschiedlichen Strings <code>"FB"</code> und <code>"Ea"</code> haben denselben Hashcode. Dieses vollständige Programm zeigt die Kollision:</p>
+        <pre class="copyable">import java.util.HashMap;
+import java.util.Map;
+
+public class Main {
+    public static void main(String[] args) {
+        String a = "FB";
+        String b = "Ea";
+
+        System.out.println(a.hashCode()); // 2236
+        System.out.println(b.hashCode()); // 2236
+        System.out.println(a.equals(b));  // false
+
+        Map&lt;String, Integer&gt; map = new HashMap&lt;&gt;();
+        map.put(a, 100);
+        map.put(b, 200);
+
+        System.out.println(map.size());    // 2
+        System.out.println(map.get("FB")); // 100
+        System.out.println(map.get("Ea")); // 200
+    }
+}</pre>
+        <h4>Warum entsteht derselbe Hashcode?</h4>
+        <p>Die Berechnung beginnt bei 0. Für jedes Zeichen wird der bisherige Wert mit 31 multipliziert und der Zeichenwert addiert. Bei diesen beiden Strings ergibt sich:</p>
+        <pre class="copyable">"FB": 70 * 31 + 66 = 2236
+"Ea": 69 * 31 + 97 = 2236</pre>
+        <p>Der Zeichenwert von <code>F</code> ist um 1 größer als jener von <code>E</code>. Nach der Multiplikation beträgt der Unterschied 31. Der Wert von <code>a</code> ist um 31 größer als jener von <code>B</code> und gleicht diesen Unterschied aus.</p>
+        <p><strong>Beide Einträge bleiben erhalten:</strong> Der gleiche Hashcode führt zum selben Bucket. Mit <code>equals()</code> unterscheidet die Map die beiden Schlüssel. Ein erneutes <code>put()</code> mit einem gleichen Schlüssel würde dessen bisherigen Wert ersetzen.</p>
+        <p><strong>Merke:</strong> Gleiche Hashcodes bedeuten nicht automatisch gleiche Objekte. Sind zwei Objekte laut <code>equals()</code> gleich, müssen ihre Hashcodes gleich sein.</p>
+    </article>
+    <article>
         <h3>Vertrag von equals() und hashCode()</h3>
         <pre class="copyable">a.equals(b) == true
 → a.hashCode() == b.hashCode()   // muss gelten
