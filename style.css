@@ -241,6 +241,4 @@ main ul li a:hover {
   vertical-align: top;
 }
 
-#tasks button + button {
-  margin-left: 5px;
-}
+.task-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
