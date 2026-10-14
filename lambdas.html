@@ -4,6 +4,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Java Lambdas · POS</title>
 <link rel="stylesheet" href="style.css">
+<style>
+/* Abstand zwischen Hinweis- und Lösungsbutton */
+#tasks article > button:not(:first-of-type) {
+  margin-left: 12px;
+}
+</style>
 </head>
 <body>
 <header><h1>Java Lambdas</h1><p>Verhalten mit funktionalen Interfaces beschreiben und übergeben</p></header>
@@ -185,7 +191,6 @@ tasks.forEach(([title,description,hint,explanation,solution],i)=>{
   hintDiv.innerHTML=`<p>${hint}</p>`;
   const solutionButton=document.createElement('button');
   solutionButton.textContent='Lösung anzeigen';
-  solutionButton.style.marginLeft='12px';
   solutionButton.setAttribute('onclick',`toggleSolution('lambda-solution-${n}')`);
   const solutionDiv=document.createElement('div');
   solutionDiv.id=`lambda-solution-${n}`;
