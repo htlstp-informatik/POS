@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="de">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Java Streams &middot; POS
+  </title>
+  <link href="style.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <header>
+   <h1>
+    Java Streams
+   </h1>
+   <p>
+    Daten mit Stream-Pipelines filtern, umwandeln, sortieren und zusammenfassen
+   </p>
+  </header>
+  <nav>
+   <a href="index.html">
+    Start
+   </a>
+   <a href="#grundlagen">
+    Grundlagen
+   </a>
+   <a href="#operationen">
+    Operationen
+   </a>
+   <a href="#typen">
+    Stream-Typen
+   </a>
+   <a href="#sammeln">
+    Collect &amp; Gruppieren
+   </a>
+   <a href="#flatmap">
+    flatMap
+   </a>
+   <a href="#uebungen">
+    &Uuml;bungen
+   </a>
+  </nav>
+  <main>
+   <section class="intro" id="start">
+    <h2>
+     Was sind Streams?
+    </h2>
+    <p>
+     Mit der Stream-API k&ouml;nnen Elemente einer Datenquelle, zum Beispiel einer
+     <code>
+      List
+     </code>
+     , in einer Verarbeitungskette bearbeitet werden. Ein Stream ist
+     <strong>
+      keine neue Collection
+     </strong>
+     und speichert selbst keine Elemente.
+    </p>
+    <pre class="copyable">List&lt;Integer&gt; numbers = List.of(12, 9, 13, 6, 23, 1, 289);
+numbers.stream()
+       .filter(n -&gt; n % 2 != 0)
+       .forEach(System.out::println); // 9, 13, 23, 1, 289</pre>
+    <p>
+     Du kennst Lambdas und Methodenreferenzen bereits. In Streams werden sie an Operationen wie
+     <code>
+      filter
+     </code>
+     und
+     <code>
+      map
+     </code>
+     &uuml;bergeben. Die Beispiele verwenden Java 17 oder neuer, insbesondere
+     <code>
+      Stream.toList()
+     </code>
+     (seit Java 16).
+    </p>
+   </section>
+   <section class="card" id="grundlagen">
+    <h2>
+     Aufbau einer Stream-Pipeline
+    </h2>
+    <p>
+     Eine Pipeline besteht aus
+     <strong>
+      Quelle
+     </strong>
+     , beliebig vielen
+     <strong>
+      intermedi&auml;ren Operationen
+     </strong>
+     und einer
+     <strong>
+      terminalen Operation
+     </strong>
+     .
+    </p>
+    <pre class="copyable">List&lt;String&gt; result = List.of("Spring", "API", "Docker").stream() // Quelle
+    .filter(s -&gt; s.length() &gt; 3)                       // intermedi&auml;r
+    .map(String::toUpperCase)                          // intermedi&auml;r
+    .toList();                                         // terminal
+System.out.println(result); // [SPRING, DOCKER]</pre>
+    <p>
+     Intermedi&auml;re Operationen sind
+     <strong>
+      lazy
+     </strong>
+     : Sie werden erst durch eine terminale Operation ausgef&uuml;hrt. Ein Stream kann nach einer terminalen Operation nicht nochmals verwendet werden; er muss neu erzeugt werden.
+    </p>
+   </section>
+   <section class="card" id="operationen">
+    <h2>
+     H&auml;ufige Operationen
+    </h2>
+    <h3>
+     filter, map, sorted und limit
+    </h3>
+    <pre class="copyable">List&lt;Integer&gt; result = List.of(3, 12, 5, 10, 7).stream()
+    .filter(n -&gt; n &gt; 4)                       // 12, 5, 10, 7
+    .map(n -&gt; n * n)                          // 144, 25, 100, 49
+    .sorted(Comparator.reverseOrder())       // 144, 100, 49, 25
+    .limit(3)
+    .toList();
+System.out.println(result); // [144, 100, 49]</pre>
+    <p>
+     <code>
+      filter
+     </code>
+     erwartet ein
+     <code>
+      Predicate&lt;T&gt;
+     </code>
+     ;
+     <code>
+      map
+     </code>
+     erwartet eine
+     <code>
+      Function&lt;T,R&gt;
+     </code>
+     .
+     <code>
+      sorted
+     </code>
+     und
+     <code>
+      limit
+     </code>
+     ver&auml;ndern nicht die Ausgangsliste.
+    </p>
+    <h3>
+     findFirst, max und reduce
+    </h3>
+    <pre class="copyable">Optional&lt;String&gt; first = List.of("Java", "API").stream().findFirst();
+System.out.println(first.orElse("Kein Element"));
+
+int sum = List.of(1, 2, 3).stream().reduce(0, Integer::sum);
+System.out.println(sum); // 6</pre>
+    <p>
+     <code>
+      findFirst()
+     </code>
+     und
+     <code>
+      max()
+     </code>
+     liefern ein
+     <code>
+      Optional
+     </code>
+     , weil der Stream leer sein k&ouml;nnte.
+     <code>
+      reduce
+     </code>
+     fasst mehrere Elemente zu einem Ergebnis zusammen.
+    </p>
+   </section>
+   <section class="card" id="typen">
+    <h2>
+     Primitive Streams: IntStream
+    </h2>
+    <p>
+     F&uuml;r primitive Zahlen gibt es
+     <code>
+      IntStream
+     </code>
+     ,
+     <code>
+      LongStream
+     </code>
+     und
+     <code>
+      DoubleStream
+     </code>
+     . Damit sind Operationen wie
+     <code>
+      sum()
+     </code>
+     und
+     <code>
+      average()
+     </code>
+     direkt m&ouml;glich.
+    </p>
+    <pre class="copyable">int sum = IntStream.rangeClosed(1, 10).sum(); // 55
+int sum2 = List.of(1, 2, 3).stream()
+    .mapToInt(Integer::intValue)
+    .sum(); // 6
+List&lt;String&gt; texts = IntStream.of(12, 9, 13)
+    .mapToObj(String::valueOf)
+    .toList();</pre>
+    <p>
+     <code>
+      rangeClosed(1, 10)
+     </code>
+     schlie&szlig;t die 10 ein;
+     <code>
+      range(1, 10)
+     </code>
+     nicht.
+     <code>
+      mapToInt
+     </code>
+     wechselt von
+     <code>
+      Stream&lt;Integer&gt;
+     </code>
+     zu
+     <code>
+      IntStream
+     </code>
+     ,
+     <code>
+      mapToObj
+     </code>
+     zur&uuml;ck zu einem Objekt-Stream.
+    </p>
+   </section>
+   <section class="card" id="sammeln">
+    <h2>
+     Ergebnisse sammeln und gruppieren
+    </h2>
+    <p>
+     <code>
+      toList()
+     </code>
+     liefert seit Java 16 eine nicht ver&auml;nderbare Liste. Mit
+     <code>
+      collect(Collectors.toList())
+     </code>
+     erh&auml;lt man eine Liste, deren konkrete Implementierung und Ver&auml;nderbarkeit nicht zugesichert sind.
+    </p>
+    <pre class="copyable">List&lt;String&gt; words = List.of("Java", "API", "Lambda");
+Map&lt;Integer, List&lt;String&gt;&gt; byLength = words.stream()
+    .collect(Collectors.groupingBy(String::length));
+// {3=[API], 4=[Java], 6=[Lambda]}
+
+String joined = words.stream()
+    .collect(Collectors.joining(", ", "[", "]"));
+// [Java, API, Lambda]</pre>
+    <p>
+     <code>
+      groupingBy
+     </code>
+     liefert eine
+     <code>
+      Map
+     </code>
+     , deren Schl&uuml;ssel aus einer Funktion entstehen. F&uuml;r die Anzahl der Elemente pro Gruppe eignet sich
+     <code>
+      Collectors.counting()
+     </code>
+     .
+    </p>
+   </section>
+   <section class="card" id="flatmap">
+    <h2>
+     Verschachtelte Listen mit flatMap
+    </h2>
+    <p>
+     <code>
+      map
+     </code>
+     erzeugt aus jedem Element genau ein neues Element.
+     <code>
+      flatMap
+     </code>
+     kann aus jedem Element einen Stream erzeugen und diese Streams zu einem einzigen Stream zusammenf&uuml;hren.
+    </p>
+    <pre class="copyable">List&lt;List&lt;String&gt;&gt; nested = List.of(
+    List.of("c", "a"), List.of("b", "d"));
+List&lt;String&gt; flat = nested.stream()
+    .flatMap(List::stream)
+    .sorted()
+    .toList();
+System.out.println(flat); // [a, b, c, d]</pre>
+    <p>
+     F&uuml;r die Aufgaben ben&ouml;tigst du je nach Beispiel
+     <code>
+      java.util.*
+     </code>
+     ,
+     <code>
+      java.util.stream.*
+     </code>
+     und gegebenenfalls
+     <code>
+      java.util.function.*
+     </code>
+     .
+    </p>
+   </section>
+   <section class="card" id="uebungen">
+    <h2>
+     &Uuml;bungen
+    </h2>
+    <p>
+     Die Aufgaben entsprechen dem bereitgestellten &Uuml;bungsblatt. Mit &bdquo;Hinweis anzeigen&ldquo; erh&auml;ltst du einen Tipp, mit &bdquo;L&ouml;sung anzeigen&ldquo; eine m&ouml;gliche Umsetzung. Codebeispiele lassen sich &uuml;ber die Kopieren-Schaltfl&auml;che &uuml;bernehmen.
+    </p>
+    <article>
+     <h3>
+      1. Ungerade Zahlen
+     </h3>
+     <p>
+      Gib aus
+      <code>
+       List.of(12, 9, 13, 6, 23, 1, 289)
+      </code>
+      nur die ungeraden Zahlen aus.
+     </p>
+     <button onclick="toggleSolution('stream-hint-1')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-1">
+      <p>
+       Filtere auf Zahlen, deren Rest bei Division durch 2 nicht 0 ist.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-1')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-1">
+      <pre class="copyable">List&lt;Integer&gt; numbers = List.of(12, 9, 13, 6, 23, 1, 289);
+numbers.stream()
+    .filter(n -&gt; n % 2 != 0)
+    .forEach(System.out::println); // 9, 13, 23, 1, 289</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      2. Quadrate gerader Zahlen
+     </h3>
+     <p>
+      Bilde die Quadrate der geraden Zahlen aus Aufgabe 1. Verwende
+      <code>
+       map
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-2')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-2">
+      <p>
+       Zuerst gerade Zahlen filtern, danach quadrieren.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-2')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-2">
+      <pre class="copyable">List&lt;Integer&gt; numbers = List.of(12, 9, 13, 6, 23, 1, 289);
+numbers.stream()
+    .filter(n -&gt; n % 2 == 0)
+    .map(n -&gt; n * n)
+    .forEach(System.out::println); // 144, 36</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      3. Kurse in Gro&szlig;buchstaben
+     </h3>
+     <p>
+      Gib die Kurse
+      <code>
+       Spring
+      </code>
+      ,
+      <code>
+       Spring Boot
+      </code>
+      ,
+      <code>
+       API
+      </code>
+      ,
+      <code>
+       Azure
+      </code>
+      ,
+      <code>
+       Docker
+      </code>
+      und
+      <code>
+       Kubernetes
+      </code>
+      zeilenweise in Gro&szlig;buchstaben aus.
+     </p>
+     <button onclick="toggleSolution('stream-hint-3')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-3">
+      <p>
+       Nutze map mit String::toUpperCase.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-3')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-3">
+      <pre class="copyable">List&lt;String&gt; courses = List.of("Spring", "Spring Boot", "API", "Azure", "Docker", "Kubernetes");
+courses.stream()
+    .map(String::toUpperCase)
+    .forEach(System.out::println);</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      4. Personen: Durchschnitt und Gruppierung
+     </h3>
+     <p>
+      Erstelle drei Personen mit Namen und Alter, berechne das Durchschnittsalter und gruppiere die Personen nach ihrem Alter (
+      <code>
+       groupingBy
+      </code>
+      ).
+     </p>
+     <button onclick="toggleSolution('stream-hint-4')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-4">
+      <p>
+       Nutze averagingInt(Person::getAge) und groupingBy(Person::getAge).
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-4')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-4">
+      <p>
+       Die Klasse
+       <code>
+        Person
+       </code>
+       wird auch in Aufgabe 10 verwendet. Die Gruppierung liefert eine
+       <code>
+        Map&lt;Integer, List&lt;Person&gt;&gt;
+       </code>
+       .
+      </p>
+      <pre class="copyable">class Person implements Comparable&lt;Person&gt; {
+    private final String name;
+    private final int age;
+
+    Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+    String getName() { return name; }
+    int getAge() { return age; }
+    @Override public int compareTo(Person other) {
+        return name.compareTo(other.name);
+    }
+    @Override public String toString() {
+        return name + " (" + age + ")";
+    }
+}
+
+List&lt;Person&gt; people = List.of(
+    new Person("Susi", 30),
+    new Person("Anton", 30),
+    new Person("Strolchi", 15));
+
+double average = people.stream()
+    .collect(Collectors.averagingInt(Person::getAge));
+Map&lt;Integer, List&lt;Person&gt;&gt; byAge = people.stream()
+    .collect(Collectors.groupingBy(Person::getAge));
+System.out.println(average); // 25.0
+System.out.println(byAge);</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      5. Ersten Kurs finden
+     </h3>
+     <p>
+      Gib den ersten Kurs aus Aufgabe 3 aus.
+     </p>
+     <button onclick="toggleSolution('stream-hint-5')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-5">
+      <p>
+       findFirst liefert ein Optional; verwende orElse f&uuml;r den Leerfall.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-5')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-5">
+      <pre class="copyable">List&lt;String&gt; courses = List.of("Spring", "Spring Boot", "API", "Azure", "Docker", "Kubernetes");
+String first = courses.stream()
+    .findFirst()
+    .orElse("Kein Element enthalten!");
+System.out.println(first); // Spring</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      6. Kursname und L&auml;nge
+     </h3>
+     <p>
+      Gib f&uuml;r jeden Kurs aus Aufgabe 3 den Namen und die Anzahl der Zeichen aus. Verwende
+      <code>
+       map
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-6')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-6">
+      <p>
+       Mappe jeden Kurs auf einen formatierten String.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-6')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-6">
+      <pre class="copyable">List&lt;String&gt; courses = List.of("Spring", "Spring Boot", "API", "Azure", "Docker", "Kubernetes");
+courses.stream()
+    .map(course -&gt; course + " " + course.length())
+    .forEach(System.out::println); // Spring 6, Spring Boot 11, ...</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      7. Dritter Buchstabe
+     </h3>
+     <p>
+      Gib von jedem Kurs aus Aufgabe 3 nur den dritten Buchstaben aus.
+     </p>
+     <button onclick="toggleSolution('stream-hint-7')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-7">
+      <p>
+       String.charAt(2) verwendet Index 2 f&uuml;r das dritte Zeichen.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-7')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-7">
+      <pre class="copyable">List&lt;String&gt; courses = List.of("Spring", "Spring Boot", "API", "Azure", "Docker", "Kubernetes");
+courses.stream()
+    .map(course -&gt; course.charAt(2))
+    .forEach(System.out::println); // r, r, I, u, c, b</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      8. Zahlen in Strings umwandeln
+     </h3>
+     <p>
+      Wandle die Zahlenliste aus Aufgabe 1 in eine
+      <code>
+       List&lt;String&gt;
+      </code>
+      um. Verwende
+      <code>
+       mapToInt
+      </code>
+      ,
+      <code>
+       mapToObj
+      </code>
+      und
+      <code>
+       toList
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-8')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-8">
+      <p>
+       Wandle zuerst Integer in int und danach int in String um.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-8')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-8">
+      <pre class="copyable">List&lt;Integer&gt; numbers = List.of(12, 9, 13, 6, 23, 1, 289);
+List&lt;String&gt; texts = numbers.stream()
+    .mapToInt(Integer::intValue)
+    .mapToObj(String::valueOf)
+    .toList();
+System.out.println(texts); // [12, 9, 13, 6, 23, 1, 289]</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      9. Summe mit reduce
+     </h3>
+     <p>
+      Berechne die Summe der Zahlen aus Aufgabe 1 mit
+      <code>
+       reduce
+      </code>
+      und
+      <code>
+       Integer::sum
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-9')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-9">
+      <p>
+       Verwende 0 als Startwert der Reduktion.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-9')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-9">
+      <pre class="copyable">List&lt;Integer&gt; numbers = List.of(12, 9, 13, 6, 23, 1, 289);
+int sum = numbers.stream()
+    .reduce(0, Integer::sum);
+System.out.println(sum); // 353</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      10. Personen nach Namen sortieren
+     </h3>
+     <p>
+      Sortiere zwei selbst erstellte
+      <code>
+       Person
+      </code>
+      -Objekte alphabetisch nach ihrem Namen. Verwende
+      <code>
+       sorted()
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-10')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-10">
+      <p>
+       Nutze die Person-Klasse aus Aufgabe 4; sie implementiert Comparable.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-10')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-10">
+      <p>
+       <code>
+        sorted()
+       </code>
+       ohne Argument verwendet die nat&uuml;rliche Ordnung aus
+       <code>
+        compareTo()
+       </code>
+       .
+      </p>
+      <pre class="copyable">Person p1 = new Person("Susi", 30);
+Person p2 = new Person("Anton", 30);
+List&lt;Person&gt; names = Arrays.asList(p1, p2);
+List&lt;Person&gt; sortedNames = names.stream()
+    .sorted()
+    .toList();
+System.out.println(sortedNames); // [Anton (30), Susi (30)]</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      11. Zahlen von 1 bis 10 summieren
+     </h3>
+     <p>
+      Berechne mit
+      <code>
+       rangeClosed
+      </code>
+      die Summe von 1 bis einschlie&szlig;lich 10. Ergebnis: 55.
+     </p>
+     <button onclick="toggleSolution('stream-hint-11')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-11">
+      <p>
+       IntStream.rangeClosed schlie&szlig;t den oberen Grenzwert ein.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-11')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-11">
+      <pre class="copyable">int sum = IntStream.rangeClosed(1, 10).sum();
+System.out.println(sum); // 55</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      12. W&ouml;rter nach L&auml;nge gruppieren
+     </h3>
+     <p>
+      Gruppiere
+      <code>
+       Java
+      </code>
+      ,
+      <code>
+       Stream
+      </code>
+      ,
+      <code>
+       API
+      </code>
+      ,
+      <code>
+       Lambda
+      </code>
+      und
+      <code>
+       Functional
+      </code>
+      nach ihrer L&auml;nge.
+     </p>
+     <button onclick="toggleSolution('stream-hint-12')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-12">
+      <p>
+       Der Gruppierungsschl&uuml;ssel ist String::length.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-12')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-12">
+      <pre class="copyable">Map&lt;Integer, List&lt;String&gt;&gt; grouped = Stream.of(
+    "Java", "Stream", "API", "Lambda", "Functional")
+    .collect(Collectors.groupingBy(String::length));
+System.out.println(grouped);
+// {3=[API], 4=[Java], 6=[Stream, Lambda], 10=[Functional]}</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      13. Verschachtelte Listen aufl&ouml;sen
+     </h3>
+     <p>
+      Extrahiere alle Strings aus verschachtelten Listen und sortiere sie alphabetisch. Erwartet:
+      <code>
+       [a, b, c, d, e, f, g, h]
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-13')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-13">
+      <p>
+       flatMap(List::stream) f&uuml;hrt die inneren Streams zusammen.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-13')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-13">
+      <pre class="copyable">List&lt;List&lt;String&gt;&gt; nestedLists = List.of(
+    List.of("e", "b", "c"),
+    List.of("f", "a"),
+    List.of("d", "h", "g"));
+List&lt;String&gt; flatList = nestedLists.stream()
+    .flatMap(List::stream)
+    .sorted()
+    .toList();
+System.out.println(flatList); // [a, b, c, d, e, f, g, h]</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      14. Zeichenh&auml;ufigkeit z&auml;hlen
+     </h3>
+     <p>
+      Z&auml;hle die H&auml;ufigkeit aller Zeichen in
+      <code>
+       "hello world"
+      </code>
+      , ohne Leerzeichen.
+     </p>
+     <button onclick="toggleSolution('stream-hint-14')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-14">
+      <p>
+       String.chars() liefert IntStream; mapToObj wandelt Zeichenwerte um.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-14')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-14">
+      <p>
+       Die Reihenfolge der Schl&uuml;ssel in der Map ist nicht garantiert. Anders als
+       <code>
+        Character::isLetter
+       </code>
+       entfernt der Filter hier nur Leerzeichen, wie gefordert.
+      </p>
+      <pre class="copyable">String text = "hello world";
+Map&lt;Character, Long&gt; frequency = text.chars()
+    .mapToObj(c -&gt; (char) c)
+    .filter(c -&gt; c != ' ')
+    .collect(Collectors.groupingBy(c -&gt; c, Collectors.counting()));
+System.out.println(frequency);
+// d=1, e=1, h=1, l=3, o=2, r=1, w=1</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      15. Drei gr&ouml;&szlig;te Zahlen
+     </h3>
+     <p>
+      Finde aus
+      <code>
+       3, 5, 1, 10, 12, 4, 7
+      </code>
+      die drei gr&ouml;&szlig;ten Zahlen.
+     </p>
+     <button onclick="toggleSolution('stream-hint-15')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-15">
+      <p>
+       Sortiere absteigend und begrenze auf drei Elemente.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-15')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-15">
+      <pre class="copyable">List&lt;Integer&gt; values = List.of(3, 5, 1, 10, 12, 4, 7);
+List&lt;Integer&gt; top3 = values.stream()
+    .sorted(Comparator.reverseOrder())
+    .limit(3)
+    .toList();
+System.out.println(top3); // [12, 10, 7]</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      16. Liste zu einem String verbinden
+     </h3>
+     <p>
+      F&uuml;ge
+      <code>
+       Java
+      </code>
+      ,
+      <code>
+       Stream
+      </code>
+      und
+      <code>
+       API
+      </code>
+      zu
+      <code>
+       "[Java, Stream, API]"
+      </code>
+      zusammen.
+     </p>
+     <button onclick="toggleSolution('stream-hint-16')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-16">
+      <p>
+       Collectors.joining akzeptiert Trennzeichen, Pr&auml;fix und Suffix.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-16')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-16">
+      <pre class="copyable">List&lt;String&gt; words = List.of("Java", "Stream", "API");
+String result = words.stream()
+    .collect(Collectors.joining(", ", "[", "]"));
+System.out.println(result); // [Java, Stream, API]</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      17. L&auml;ngstes Wort finden
+     </h3>
+     <p>
+      Finde das l&auml;ngste Wort aus
+      <code>
+       Java
+      </code>
+      ,
+      <code>
+       Stream
+      </code>
+      ,
+      <code>
+       Lambda
+      </code>
+      und
+      <code>
+       Functional
+      </code>
+      .
+     </p>
+     <button onclick="toggleSolution('stream-hint-17')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-17">
+      <p>
+       max erwartet einen Comparator; vergleiche nach String::length.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-17')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-17">
+      <pre class="copyable">List&lt;String&gt; words = List.of("Java", "Stream", "Lambda", "Functional");
+String longest = words.stream()
+    .max(Comparator.comparingInt(String::length))
+    .orElse("No words");
+System.out.println(longest); // Functional</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      18a. Schleife durch Stream ersetzen: Map-Eintr&auml;ge
+     </h3>
+     <p>
+      Wandle eine Schleife um, die aus Namen und Alter Strings der Form
+      <code>
+       "Alice is 25 years old"
+      </code>
+      erzeugt.
+     </p>
+     <button onclick="toggleSolution('stream-hint-18a')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-18a">
+      <p>
+       Map.entrySet().stream() liefert Eintr&auml;ge; map formatiert jeden Eintrag.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-18a')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-18a">
+      <p>
+       Die Reihenfolge der Eintr&auml;ge einer
+       <code>
+        HashMap
+       </code>
+       ist nicht garantiert.
+      </p>
+      <pre class="copyable">Map&lt;String, Integer&gt; ages = new HashMap&lt;&gt;();
+ages.put("Alice", 25);
+ages.put("Bob", 30);
+ages.put("Charlie", 35);
+
+List&lt;String&gt; result = ages.entrySet().stream()
+    .map(e -&gt; e.getKey() + " is " + e.getValue() + " years old")
+    .toList();
+System.out.println(result);</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      18b. Schleife durch Stream ersetzen: Anfangsbuchstaben
+     </h3>
+     <p>
+      Gruppiere die Namen
+      <code>
+       Alice
+      </code>
+      ,
+      <code>
+       Bob
+      </code>
+      ,
+      <code>
+       Charlie
+      </code>
+      ,
+      <code>
+       Anna
+      </code>
+      und
+      <code>
+       Chris
+      </code>
+      nach ihrem ersten Buchstaben.
+     </p>
+     <button onclick="toggleSolution('stream-hint-18b')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-18b">
+      <p>
+       groupingBy mit name.charAt(0).
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-18b')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-18b">
+      <pre class="copyable">List&lt;String&gt; names = Arrays.asList("Alice", "Bob", "Charlie", "Anna", "Chris");
+Map&lt;Character, List&lt;String&gt;&gt; grouped = names.stream()
+    .collect(Collectors.groupingBy(name -&gt; name.charAt(0)));
+System.out.println(grouped);
+// {A=[Alice, Anna], B=[Bob], C=[Charlie, Chris]}</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      18c. Schleife durch Stream ersetzen: Map filtern
+     </h3>
+     <p>
+      &Uuml;bernimm aus einer Map mit
+      <code>
+       Alice=25
+      </code>
+      ,
+      <code>
+       Bob=30
+      </code>
+      und
+      <code>
+       Charlie=35
+      </code>
+      nur Eintr&auml;ge mit Alter &uuml;ber 28 in eine neue Map.
+     </p>
+     <button onclick="toggleSolution('stream-hint-18c')">
+      Hinweis anzeigen
+     </button>
+     <div class="solution" id="stream-hint-18c">
+      <p>
+       filter auf entry.getValue() und collect mit Collectors.toMap.
+      </p>
+     </div>
+     <button onclick="toggleSolution('stream-solution-18c')">
+      L&ouml;sung anzeigen
+     </button>
+     <div class="solution" id="stream-solution-18c">
+      <p>
+       Die Reihenfolge der Schl&uuml;ssel ist nicht garantiert.
+      </p>
+      <pre class="copyable">Map&lt;String, Integer&gt; m1 = Map.of("Alice", 25, "Bob", 30, "Charlie", 35);
+Map&lt;String, Integer&gt; m2 = m1.entrySet().stream()
+    .filter(e -&gt; e.getValue() &gt; 28)
+    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+System.out.println(m2); // Bob=30, Charlie=35</pre>
+     </div>
+    </article>
+   </section>
+  </main>
+  <footer>
+   <p>
+    Java Streams &middot; POS
+   </p>
+  </footer>
+  <script src="script.js">
+  </script>
+ </body>
+</html>
