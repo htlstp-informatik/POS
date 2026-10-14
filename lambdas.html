@@ -153,50 +153,143 @@ Function&lt;String, Integer&gt; length2 = String::length;
 
 Comparator&lt;Integer&gt; cmp = (a, b) -&gt; Integer.compare(a, b);
 Comparator&lt;Integer&gt; cmp2 = Integer::compare;</pre><p>Bei <code>System.out::println</code> wird eine Methode eines vorhandenen Objekts verwendet; bei <code>String::length</code> die Methode des übergebenen Strings; bei <code>Integer::compare</code> eine statische Methode.</p></section>
-<section id="uebungen" class="card"><h2>Übungen</h2><p>Nutze bei Bedarf die Beispiele aus dem Theorieabschnitt. Für Standard-Interfaces importiere die benötigten Typen aus <code>java.util.function</code>, für Listen und Comparator aus <code>java.util</code>. Ausschnitte mit Aufrufen gehören in <code>main</code>.</p><div id="tasks"></div></section>
+<section id="uebungen" class="card"><h2>Übungen</h2><p>Nutze bei Bedarf die Beispiele aus dem Theorieabschnitt. Für Standard-Interfaces importiere die benötigten Typen aus <code>java.util.function</code>, für Listen und Comparator aus <code>java.util</code>. Ausschnitte mit Aufrufen gehören in <code>main</code>.</p>
+<article>
+  <h3>1. Lambda lesen</h3>
+  <p>Erkläre die Teile von <code>(a, b) -&gt; Integer.compare(a, b)</code>. Welches Interface passt dazu?</p>
+  <button onclick="toggleSolution('lambda-hint-1')">Hinweis anzeigen</button>
+  <div id="lambda-hint-1" class="solution"><p>Überlege, wie viele Parameter vorhanden sind und welcher Typ zurückgegeben wird.</p></div>
+  <button onclick="toggleSolution('lambda-solution-1')">Lösung anzeigen</button>
+  <div id="lambda-solution-1" class="solution"><p>Das Lambda hat zwei Parameter und liefert einen int-Vergleichswert. Als Zieltyp passt <code>Comparator&lt;Integer&gt;</code>; implementiert wird <code>compare</code>.</p><pre class="copyable">Comparator&lt;Integer&gt; cmp = (a, b) -&gt; Integer.compare(a, b);</pre></div>
+</article>
+<article>
+  <h3>2. Comparator umschreiben</h3>
+  <p>Schreibe den <code>NameComparator</code> aus dem ersten Abschnitt als Lambda. Sortiere die Namen aufsteigend.</p>
+  <button onclick="toggleSolution('lambda-hint-2')">Hinweis anzeigen</button>
+  <div id="lambda-hint-2" class="solution"><p>Die Implementierung von compare wird zum Lambda-Rumpf.</p></div>
+  <button onclick="toggleSolution('lambda-solution-2')">Lösung anzeigen</button>
+  <div id="lambda-solution-2" class="solution"><pre class="copyable">names.sort((a, b) -&gt; a.compareTo(b));</pre></div>
+</article>
+<article>
+  <h3>3. Nach Länge sortieren</h3>
+  <p>Sortiere eine veränderbare Liste von Strings zuerst nach Länge aufsteigend, bei gleicher Länge alphabetisch.</p>
+  <button onclick="toggleSolution('lambda-hint-3')">Hinweis anzeigen</button>
+  <div id="lambda-hint-3" class="solution"><p>Vergleiche die Längen mit Integer.compare. Bei 0 vergleichst du die Strings.</p></div>
+  <button onclick="toggleSolution('lambda-solution-3')">Lösung anzeigen</button>
+  <div id="lambda-solution-3" class="solution"><pre class="copyable">names.sort((a, b) -&gt; {
+    int result = Integer.compare(a.length(), b.length());
+    if (result == 0) return a.compareTo(b);
+    return result;
+});</pre></div>
+</article>
+<article>
+  <h3>4. Predicate</h3>
+  <p>Erstelle ein <code>Predicate&lt;Integer&gt;</code>, das gerade Zahlen erkennt. Teste es mit 8 und 7.</p>
+  <button onclick="toggleSolution('lambda-hint-4')">Hinweis anzeigen</button>
+  <div id="lambda-hint-4" class="solution"><p>Eine Zahl ist gerade, wenn der Rest bei Division durch 2 gleich 0 ist.</p></div>
+  <button onclick="toggleSolution('lambda-solution-4')">Lösung anzeigen</button>
+  <div id="lambda-solution-4" class="solution"><pre class="copyable">Predicate&lt;Integer&gt; even = number -&gt; number % 2 == 0;
+System.out.println(even.test(8)); // true
+System.out.println(even.test(7)); // false</pre></div>
+</article>
+<article>
+  <h3>5. Consumer</h3>
+  <p>Erstelle einen <code>Consumer&lt;String&gt;</code>, der einen Namen mit dem Präfix „Hallo “ ausgibt. Verwende ihn mit <code>forEach</code>.</p>
+  <button onclick="toggleSolution('lambda-hint-5')">Hinweis anzeigen</button>
+  <div id="lambda-hint-5" class="solution"><p>Consumer liefert keinen Rückgabewert.</p></div>
+  <button onclick="toggleSolution('lambda-solution-5')">Lösung anzeigen</button>
+  <div id="lambda-solution-5" class="solution"><pre class="copyable">Consumer&lt;String&gt; greet = name -&gt; System.out.println("Hallo " + name);
+names.forEach(greet);</pre></div>
+</article>
+<article>
+  <h3>6. Function</h3>
+  <p>Erstelle eine <code>Function&lt;String, Integer&gt;</code>, die die Länge eines Strings liefert. Rufe sie mit „Java“ auf.</p>
+  <button onclick="toggleSolution('lambda-hint-6')">Hinweis anzeigen</button>
+  <div id="lambda-hint-6" class="solution"><p>Verwende apply, um die Funktion aufzurufen.</p></div>
+  <button onclick="toggleSolution('lambda-solution-6')">Lösung anzeigen</button>
+  <div id="lambda-solution-6" class="solution"><pre class="copyable">Function&lt;String, Integer&gt; length = text -&gt; text.length();
+System.out.println(length.apply("Java")); // 4</pre></div>
+</article>
+<article>
+  <h3>7. Supplier</h3>
+  <p>Erstelle einen <code>Supplier&lt;ArrayList&lt;String&gt;&gt;</code>, der bei jedem Aufruf eine neue leere Liste erzeugt.</p>
+  <button onclick="toggleSolution('lambda-hint-7')">Hinweis anzeigen</button>
+  <div id="lambda-hint-7" class="solution"><p>Ein Supplier benötigt keine Parameter. Verwende new im Lambda-Rumpf.</p></div>
+  <button onclick="toggleSolution('lambda-solution-7')">Lösung anzeigen</button>
+  <div id="lambda-solution-7" class="solution"><pre class="copyable">Supplier&lt;ArrayList&lt;String&gt;&gt; createList = () -&gt; new ArrayList&lt;&gt;();
+ArrayList&lt;String&gt; first = createList.get();
+ArrayList&lt;String&gt; second = createList.get();
+System.out.println(first == second); // false</pre></div>
+</article>
+<article>
+  <h3>8. Liste verändern</h3>
+  <p>Erzeuge eine ArrayList aus „Anna“, „Bo“ und „Clara“. Entferne Namen mit weniger als drei Zeichen und wandle die übrigen in Großbuchstaben um.</p>
+  <button onclick="toggleSolution('lambda-hint-8')">Hinweis anzeigen</button>
+  <div id="lambda-hint-8" class="solution"><p>removeIf benötigt eine Bedingung; replaceAll benötigt einen neuen Wert für jedes Element.</p></div>
+  <button onclick="toggleSolution('lambda-solution-8')">Lösung anzeigen</button>
+  <div id="lambda-solution-8" class="solution"><pre class="copyable">List&lt;String&gt; names = new ArrayList&lt;&gt;(List.of("Anna", "Bo", "Clara"));
+names.removeIf(name -&gt; name.length() &lt; 3);
+names.replaceAll(name -&gt; name.toUpperCase(java.util.Locale.ROOT));
+System.out.println(names); // [ANNA, CLARA]</pre></div>
+</article>
+<article>
+  <h3>9. Eigenes Interface</h3>
+  <p>Verwende <code>IntOperation</code> aus dem Theorieabschnitt. Definiere ein Lambda, das den größeren Wert zurückgibt, und übergib es an <code>calculate</code>.</p>
+  <button onclick="toggleSolution('lambda-hint-9')">Hinweis anzeigen</button>
+  <div id="lambda-hint-9" class="solution"><p>Math.max liefert den größeren int-Wert.</p></div>
+  <button onclick="toggleSolution('lambda-solution-9')">Lösung anzeigen</button>
+  <div id="lambda-solution-9" class="solution"><pre class="copyable">IntOperation maximum = (a, b) -&gt; Math.max(a, b);
+System.out.println(calculate(4, 9, maximum)); // 9</pre></div>
+</article>
+<article>
+  <h3>10. Employee: weitere Sortierregel</h3>
+  <p>Verwende die Employee-Klasse. Sortiere nach Dienstjahren absteigend und bei Gleichstand nach Namen aufsteigend.</p>
+  <button onclick="toggleSolution('lambda-hint-10')">Hinweis anzeigen</button>
+  <div id="lambda-hint-10" class="solution"><p>Vertausche für absteigende Reihenfolge die Argumente bei Integer.compare.</p></div>
+  <button onclick="toggleSolution('lambda-solution-10')">Lösung anzeigen</button>
+  <div id="lambda-solution-10" class="solution"><pre class="copyable">employees.sort((e1, e2) -&gt; {
+    int result = Integer.compare(e2.yearsEmployed, e1.yearsEmployed);
+    if (result == 0) return e1.name.compareTo(e2.name);
+    return result;
+});</pre></div>
+</article>
+<article>
+  <h3>11. Fehler finden</h3>
+  <p>Warum kompiliert dieser Code nicht?<pre class="copyable">int limit = 3;
+Predicate&lt;String&gt; longer = text -&gt; {
+    text.length() &gt; limit;
+};
+limit++;</pre></p>
+  <button onclick="toggleSolution('lambda-hint-11')">Hinweis anzeigen</button>
+  <div id="lambda-hint-11" class="solution"><p>Achte sowohl auf den Blockrumpf als auch auf die lokale Variable.</p></div>
+  <button onclick="toggleSolution('lambda-solution-11')">Lösung anzeigen</button>
+  <div id="lambda-solution-11" class="solution"><p>Im Block fehlt die Rückgabe; der Vergleich allein ist außerdem keine zulässige Ausdrucksanweisung. Durch <code>limit++</code> ist die übernommene Variable nicht effektiv final.</p><pre class="copyable">int limit = 3;
+Predicate&lt;String&gt; longer = text -&gt; {
+    return text.length() &gt; limit;
+};</pre></div>
+</article>
+<article>
+  <h3>12. Methodenreferenzen</h3>
+  <p>Ersetze die Lambdas aus Aufgabe 5 (ohne Präfix), Aufgabe 6 und Aufgabe 7 durch passende Methodenreferenzen.</p>
+  <button onclick="toggleSolution('lambda-hint-12')">Hinweis anzeigen</button>
+  <div id="lambda-hint-12" class="solution"><p>Verwende System.out::println, String::length und eine Konstruktorreferenz.</p></div>
+  <button onclick="toggleSolution('lambda-solution-12')">Lösung anzeigen</button>
+  <div id="lambda-solution-12" class="solution"><p><code>ArrayList::new</code> verweist auf einen Konstruktor. Das Präfix aus Aufgabe 5 würde weiterhin ein Lambda oder eine passende eigene Methode benötigen.</p><pre class="copyable">Consumer&lt;String&gt; print = System.out::println;
+Function&lt;String, Integer&gt; length = String::length;
+Supplier&lt;ArrayList&lt;String&gt;&gt; createList = ArrayList::new;</pre></div>
+</article>
+<article>
+  <h3>13. Comparator.comparing verstehen</h3>
+  <p>Schreibe die Sortierung aus dem Employee-Beispiel mit <code>Comparator.comparing()</code> und <code>thenComparingInt()</code> um. Erkläre, welches funktionale Interface das Lambda <code>e -&gt; e.name</code> implementiert.</p>
+  <button onclick="toggleSolution('lambda-hint-13')">Hinweis anzeigen</button>
+  <div id="lambda-hint-13" class="solution"><p><code>comparing</code> benötigt eine Funktion zum Auslesen des ersten Sortierschlüssels; der zweite Schlüssel ist eine int-Eigenschaft.</p></div>
+  <button onclick="toggleSolution('lambda-solution-13')">Lösung anzeigen</button>
+  <div id="lambda-solution-13" class="solution"><p><code>e -&gt; e.name</code> entspricht <code>Function&lt;Employee, String&gt;</code>. Es liefert nur den Namen; <code>comparing()</code> erzeugt daraus den Comparator.</p><pre class="copyable">Comparator&lt;Employee&gt; cmp = Comparator
+    .comparing((Employee e) -&gt; e.name)
+    .thenComparingInt(e -&gt; e.yearsEmployed);
+employees.sort(cmp);</pre></div>
+</article>
+</section>
 </main><footer>Java Lambdas · <a href="https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html">Oracle: Lambda Expressions</a></footer>
-<script>
-const tasks = [
-['Lambda lesen','Erkläre die Teile von <code>(a, b) -&gt; Integer.compare(a, b)</code>. Welches Interface passt dazu?','Überlege, wie viele Parameter vorhanden sind und welcher Typ zurückgegeben wird.','Das Lambda hat zwei Parameter und liefert einen int-Vergleichswert. Als Zieltyp passt <code>Comparator&lt;Integer&gt;</code>; implementiert wird <code>compare</code>.','Comparator<Integer> cmp = (a, b) -> Integer.compare(a, b);'],
-['Comparator umschreiben','Schreibe den <code>NameComparator</code> aus dem ersten Abschnitt als Lambda. Sortiere die Namen aufsteigend.','Die Implementierung von compare wird zum Lambda-Rumpf.','','names.sort((a, b) -> a.compareTo(b));'],
-['Nach Länge sortieren','Sortiere eine veränderbare Liste von Strings zuerst nach Länge aufsteigend, bei gleicher Länge alphabetisch.','Vergleiche die Längen mit Integer.compare. Bei 0 vergleichst du die Strings.','','names.sort((a, b) -> {\n    int result = Integer.compare(a.length(), b.length());\n    if (result == 0) return a.compareTo(b);\n    return result;\n});'],
-['Predicate','Erstelle ein <code>Predicate&lt;Integer&gt;</code>, das gerade Zahlen erkennt. Teste es mit 8 und 7.','Eine Zahl ist gerade, wenn der Rest bei Division durch 2 gleich 0 ist.','','Predicate<Integer> even = number -> number % 2 == 0;\nSystem.out.println(even.test(8)); // true\nSystem.out.println(even.test(7)); // false'],
-['Consumer','Erstelle einen <code>Consumer&lt;String&gt;</code>, der einen Namen mit dem Präfix „Hallo “ ausgibt. Verwende ihn mit <code>forEach</code>.','Consumer liefert keinen Rückgabewert.','','Consumer<String> greet = name -> System.out.println("Hallo " + name);\nnames.forEach(greet);'],
-['Function','Erstelle eine <code>Function&lt;String, Integer&gt;</code>, die die Länge eines Strings liefert. Rufe sie mit „Java“ auf.','Verwende apply, um die Funktion aufzurufen.','','Function<String, Integer> length = text -> text.length();\nSystem.out.println(length.apply("Java")); // 4'],
-['Supplier','Erstelle einen <code>Supplier&lt;ArrayList&lt;String&gt;&gt;</code>, der bei jedem Aufruf eine neue leere Liste erzeugt.','Ein Supplier benötigt keine Parameter. Verwende new im Lambda-Rumpf.','','Supplier<ArrayList<String>> createList = () -> new ArrayList<>();\nArrayList<String> first = createList.get();\nArrayList<String> second = createList.get();\nSystem.out.println(first == second); // false'],
-['Liste verändern','Erzeuge eine ArrayList aus „Anna“, „Bo“ und „Clara“. Entferne Namen mit weniger als drei Zeichen und wandle die übrigen in Großbuchstaben um.','removeIf benötigt eine Bedingung; replaceAll benötigt einen neuen Wert für jedes Element.','','List<String> names = new ArrayList<>(List.of("Anna", "Bo", "Clara"));\nnames.removeIf(name -> name.length() < 3);\nnames.replaceAll(name -> name.toUpperCase(java.util.Locale.ROOT));\nSystem.out.println(names); // [ANNA, CLARA]'],
-['Eigenes Interface','Verwende <code>IntOperation</code> aus dem Theorieabschnitt. Definiere ein Lambda, das den größeren Wert zurückgibt, und übergib es an <code>calculate</code>.','Math.max liefert den größeren int-Wert.','','IntOperation maximum = (a, b) -> Math.max(a, b);\nSystem.out.println(calculate(4, 9, maximum)); // 9'],
-['Employee: weitere Sortierregel','Verwende die Employee-Klasse. Sortiere nach Dienstjahren absteigend und bei Gleichstand nach Namen aufsteigend.','Vertausche für absteigende Reihenfolge die Argumente bei Integer.compare.','','employees.sort((e1, e2) -> {\n    int result = Integer.compare(e2.yearsEmployed, e1.yearsEmployed);\n    if (result == 0) return e1.name.compareTo(e2.name);\n    return result;\n});'],
-['Fehler finden','Warum kompiliert dieser Code nicht?<pre class="copyable">int limit = 3;\nPredicate&lt;String&gt; longer = text -&gt; {\n    text.length() &gt; limit;\n};\nlimit++;</pre>','Achte sowohl auf den Blockrumpf als auch auf die lokale Variable.','Im Block fehlt die Rückgabe; der Vergleich allein ist außerdem keine zulässige Ausdrucksanweisung. Durch <code>limit++</code> ist die übernommene Variable nicht effektiv final.','int limit = 3;\nPredicate<String> longer = text -> {\n    return text.length() > limit;\n};'],
-['Methodenreferenzen','Ersetze die Lambdas aus Aufgabe 5 (ohne Präfix), Aufgabe 6 und Aufgabe 7 durch passende Methodenreferenzen.','Verwende System.out::println, String::length und eine Konstruktorreferenz.','<code>ArrayList::new</code> verweist auf einen Konstruktor. Das Präfix aus Aufgabe 5 würde weiterhin ein Lambda oder eine passende eigene Methode benötigen.','Consumer<String> print = System.out::println;\nFunction<String, Integer> length = String::length;\nSupplier<ArrayList<String>> createList = ArrayList::new;'],
-['Comparator.comparing verstehen','Schreibe die Sortierung aus dem Employee-Beispiel mit <code>Comparator.comparing()</code> und <code>thenComparingInt()</code> um. Erkläre, welches funktionale Interface das Lambda <code>e -&gt; e.name</code> implementiert.','<code>comparing</code> benötigt eine Funktion zum Auslesen des ersten Sortierschlüssels; der zweite Schlüssel ist eine int-Eigenschaft.','<code>e -&gt; e.name</code> entspricht <code>Function&lt;Employee, String&gt;</code>. Es liefert nur den Namen; <code>comparing()</code> erzeugt daraus den Comparator.','Comparator<Employee> cmp = Comparator\n    .comparing((Employee e) -> e.name)\n    .thenComparingInt(e -> e.yearsEmployed);\nemployees.sort(cmp);']
-];
-const escapeHtml=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-const root=document.getElementById('tasks');
-tasks.forEach(([title,description,hint,explanation,solution],i)=>{
-  const card=document.createElement('article');
-  const n=i+1;
-  card.innerHTML=`<h3>${n}. ${title}</h3><p>${description}</p>`;
-  const hintButton=document.createElement('button');
-  hintButton.textContent='Hinweis anzeigen';
-  hintButton.setAttribute('onclick',`toggleSolution('lambda-hint-${n}')`);
-  const hintDiv=document.createElement('div');
-  hintDiv.id=`lambda-hint-${n}`;
-  hintDiv.className='solution';
-  hintDiv.innerHTML=`<p>${hint}</p>`;
-  const solutionButton=document.createElement('button');
-  solutionButton.textContent='Lösung anzeigen';
-  solutionButton.setAttribute('onclick',`toggleSolution('lambda-solution-${n}')`);
-  const solutionDiv=document.createElement('div');
-  solutionDiv.id=`lambda-solution-${n}`;
-  solutionDiv.className='solution';
-  solutionDiv.innerHTML=`${explanation?'<p>'+explanation+'</p>':''}<pre class="copyable">${escapeHtml(solution)}</pre>`;
-  const actions=document.createElement('div');
-  actions.className='task-actions';
-  actions.append(hintButton,solutionButton);
-  card.append(actions,hintDiv,solutionDiv);
-  root.append(card);
-});
-</script>
 <script src="script.js"></script>
 </body></html>
