@@ -3,16 +3,14 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Java Lambdas · POS</title>
-<style>
-:root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#17243b;background:#f5f7fb}*{box-sizing:border-box}body{margin:0;line-height:1.65}header{background:#163e68;color:white;padding:2rem max(1rem,calc((100vw - 1050px)/2))}header h1{margin:0;font-size:2rem}header p{margin:.3rem 0 0}nav{background:#fff;border-bottom:1px solid #dce4ed;position:sticky;top:0;z-index:2;padding:.65rem max(1rem,calc((100vw - 1050px)/2));display:flex;gap:.6rem;flex-wrap:wrap}nav a{color:#18558a;text-decoration:none;font-size:.92rem;padding:.3rem .45rem;border-radius:.35rem}nav a:hover{background:#e9f3fb}main{max-width:1050px;margin:1.6rem auto;padding:0 1rem}section{background:white;border:1px solid #dde5ee;border-radius:12px;padding:1.5rem;margin-bottom:1.3rem;box-shadow:0 3px 12px #0b274a09}h2{color:#163e68;margin-top:0}h3{color:#234e76;margin-top:1.6rem}p{margin:.75rem 0}code{background:#eef3f8;padding:.1rem .3rem;border-radius:4px}pre{background:#14243a;color:#edf5ff;padding:1.1rem;border-radius:8px;overflow:auto;position:relative;line-height:1.55;font-size:.9rem}pre code{background:transparent;padding:0;color:inherit}.copyable{padding-top:2.7rem}.copy-btn{position:absolute;right:.65rem;top:.55rem;background:#eaf2fb;color:#123e64;border:0;border-radius:5px;padding:.25rem .7rem;cursor:pointer}table{border-collapse:collapse;width:100%;margin:1rem 0}td,th{border:1px solid #d9e2eb;padding:.55rem;text-align:left;vertical-align:top}th{background:#edf4fa}.note{border-left:4px solid #267eb2;background:#eef7ff;padding:.8rem 1rem;margin:1rem 0}.exercise{border-top:1px solid #e2e8f0;padding-top:.7rem;margin-top:1.2rem}.toggles{display:flex;gap:.7rem;flex-wrap:wrap;margin:.8rem 0}button.toggle{background:#e7f1fa;border:1px solid #a8c9e3;color:#174c78;padding:.45rem .85rem;border-radius:6px;cursor:pointer}.reveal{padding:.75rem 1rem;background:#f5f9fd;border-radius:7px;margin:.6rem 0}footer{max-width:1050px;margin:2rem auto;padding:1rem;color:#58687b}@media(max-width:600px){header{padding:1.2rem}section{padding:1rem}nav{position:static}}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header><h1>Java Lambdas</h1><p>Verhalten mit funktionalen Interfaces beschreiben und übergeben</p></header>
 <nav><a href="index.html">Start</a><a href="#klasse">Klasse → Lambda</a><a href="#syntax">Syntax</a><a href="#interfaces">Interfaces</a><a href="#standard">Standard-Interfaces</a><a href="#listen">Listen</a><a href="#comparator">Comparator</a><a href="#variablen">Variablen</a><a href="#methoden">Methodenreferenzen</a><a href="#uebungen">Übungen</a></nav>
 <main>
-<section id="start"><h2>Was ist ein Lambda?</h2><p>Ein Lambda-Ausdruck beschreibt kurz die Implementierung einer Methode eines funktionalen Interfaces. Damit kannst du beispielsweise eine Sortierregel oder eine Bedingung direkt an eine Methode übergeben.</p><pre class="copyable">names.sort((a, b) -&gt; a.compareTo(b));</pre><p>Du kennst bereits Interfaces, Generics und Comparator mit eigener Klasse. Hier lernst du schrittweise, wie daraus ein Lambda wird. Die Beispiele verwenden Java 11 oder neuer; Lambda-Ausdrücke selbst gibt es seit Java 8.</p></section>
-<section id="klasse"><h2>Von der eigenen Klasse zum Lambda</h2><p>Alle drei Varianten sortieren dieselbe Liste alphabetisch. Die eigene Klasse kennst du von <a href="collections.html">Collections</a>. Die folgenden Ausschnitte sind alternative Varianten; verwende jeweils eine davon.</p><h3>1. Eigene Klasse</h3><p>Die Klasse implementiert das Interface und überschreibt dessen Vergleichsmethode.</p><pre class="copyable">class NameComparator implements Comparator&lt;String&gt; {
+<section id="start" class="intro"><h2>Was ist ein Lambda?</h2><p>Ein Lambda-Ausdruck beschreibt kurz die Implementierung einer Methode eines funktionalen Interfaces. Damit kannst du beispielsweise eine Sortierregel oder eine Bedingung direkt an eine Methode übergeben.</p><pre class="copyable">names.sort((a, b) -&gt; a.compareTo(b));</pre><p>Du kennst bereits Interfaces, Generics und Comparator mit eigener Klasse. Hier lernst du schrittweise, wie daraus ein Lambda wird. Die Beispiele verwenden Java 11 oder neuer; Lambda-Ausdrücke selbst gibt es seit Java 8.</p></section>
+<section id="klasse" class="card"><h2>Von der eigenen Klasse zum Lambda</h2><p>Alle drei Varianten sortieren dieselbe Liste alphabetisch. Die eigene Klasse kennst du von <a href="collections.html">Collections</a>. Die folgenden Ausschnitte sind alternative Varianten; verwende jeweils eine davon.</p><h3>1. Eigene Klasse</h3><p>Die Klasse implementiert das Interface und überschreibt dessen Vergleichsmethode.</p><pre class="copyable">class NameComparator implements Comparator&lt;String&gt; {
     @Override
     public int compare(String a, String b) {
         return a.compareTo(b);
@@ -26,7 +24,7 @@ names.sort(new NameComparator());</pre><h3>2. Anonyme Klasse</h3><p>Die Klasse w
         return a.compareTo(b);
     }
 });</pre><h3>3. Lambda-Ausdruck</h3><p>Die Parameter und der Methodenrumpf bleiben übrig. Der Compiler kennt die passende Methode aus dem erwarteten Interface <code>Comparator&lt;String&gt;</code>.</p><pre class="copyable">names.sort((a, b) -&gt; a.compareTo(b));</pre><p>Für die Ausschnitte benötigst du <code>java.util.Comparator</code>, <code>java.util.List</code> und <code>java.util.ArrayList</code>.</p><pre class="copyable">List&lt;String&gt; names = new ArrayList&lt;&gt;(List.of("Zoe", "Anna", "Ben"));</pre></section>
-<section id="syntax"><h2>Syntax verstehen</h2><h3>Parameter → Verarbeitung</h3><p>Links von <code>-&gt;</code> stehen die Parameter, rechts steht die Verarbeitung.</p><pre class="copyable">Comparator&lt;String&gt; cmp = (String a, String b) -&gt; a.compareTo(b);
+<section id="syntax" class="card"><h2>Syntax verstehen</h2><h3>Parameter → Verarbeitung</h3><p>Links von <code>-&gt;</code> stehen die Parameter, rechts steht die Verarbeitung.</p><pre class="copyable">Comparator&lt;String&gt; cmp = (String a, String b) -&gt; a.compareTo(b);
 int result = cmp.compare("Anna", "Ben"); // negativ</pre><table><tr><th>Teil</th><th>Bedeutung</th></tr><tr><td><code>(String a, String b)</code></td><td>Parameter der Methode <code>compare</code></td></tr><tr><td><code>-&gt;</code></td><td>Trennt Parameter und Rumpf</td></tr><tr><td><code>a.compareTo(b)</code></td><td>Ergebnis des Ausdrucks wird zurückgegeben</td></tr></table><h3>Typen und Klammern</h3><p>Bei genau einem Parameter ohne ausgeschriebenen Typ dürfen die Klammern entfallen. Bei keinem oder mehreren Parametern sind sie erforderlich.</p><pre class="copyable">Predicate&lt;String&gt; empty = text -&gt; text.isEmpty();
 Predicate&lt;String&gt; empty2 = (String text) -&gt; text.isEmpty();
 Runnable greeting = () -&gt; System.out.println("Hallo!");
@@ -38,7 +36,7 @@ Function&lt;String, Integer&gt; length2 = text -&gt; {
 Consumer&lt;String&gt; print = text -&gt; {
     System.out.println("Name: " + text);
 };</pre></section>
-<section id="interfaces"><h2>Funktionale Interfaces</h2><p>Ein funktionales Interface hat genau eine abstrakte Methode. Zusätzliche <code>default</code>- und <code>static</code>-Methoden sind erlaubt. <code>@FunctionalInterface</code> ist optional und lässt den Compiler die Eignung prüfen.</p><pre class="copyable">@FunctionalInterface
+<section id="interfaces" class="card"><h2>Funktionale Interfaces</h2><p>Ein funktionales Interface hat genau eine abstrakte Methode. Zusätzliche <code>default</code>- und <code>static</code>-Methoden sind erlaubt. <code>@FunctionalInterface</code> ist optional und lässt den Compiler die Eignung prüfen.</p><pre class="copyable">@FunctionalInterface
 interface IntOperation {
     int apply(int a, int b);
 }
@@ -52,7 +50,7 @@ System.out.println(multiply.apply(3, 4)); // 12</pre><p>Der Zieltyp legt Paramet
 
 System.out.println(calculate(5, 2, (a, b) -&gt; a + b)); // 7
 System.out.println(calculate(5, 2, (a, b) -&gt; a - b)); // 3</pre></section>
-<section id="standard"><h2>Häufige Standard-Interfaces</h2><p>Die ersten vier Interfaces findest du in <code>java.util.function</code>; <code>Comparator</code> liegt in <code>java.util</code>.</p><table><tr><th>Interface</th><th>Methode</th><th>Aufgabe</th></tr><tr><td><code>Predicate&lt;T&gt;</code></td><td><code>boolean test(T value)</code></td><td>Bedingung prüfen</td></tr><tr><td><code>Consumer&lt;T&gt;</code></td><td><code>void accept(T value)</code></td><td>Wert verarbeiten</td></tr><tr><td><code>Function&lt;T,R&gt;</code></td><td><code>R apply(T value)</code></td><td>Wert umwandeln / auslesen</td></tr><tr><td><code>Supplier&lt;T&gt;</code></td><td><code>T get()</code></td><td>Wert bereitstellen</td></tr><tr><td><code>Comparator&lt;T&gt;</code></td><td><code>int compare(T a,T b)</code></td><td>Zwei Werte ordnen</td></tr></table><pre class="copyable">Predicate&lt;String&gt; longName = name -&gt; name.length() &gt;= 5;
+<section id="standard" class="card"><h2>Häufige Standard-Interfaces</h2><p>Die ersten vier Interfaces findest du in <code>java.util.function</code>; <code>Comparator</code> liegt in <code>java.util</code>.</p><table><tr><th>Interface</th><th>Methode</th><th>Aufgabe</th></tr><tr><td><code>Predicate&lt;T&gt;</code></td><td><code>boolean test(T value)</code></td><td>Bedingung prüfen</td></tr><tr><td><code>Consumer&lt;T&gt;</code></td><td><code>void accept(T value)</code></td><td>Wert verarbeiten</td></tr><tr><td><code>Function&lt;T,R&gt;</code></td><td><code>R apply(T value)</code></td><td>Wert umwandeln / auslesen</td></tr><tr><td><code>Supplier&lt;T&gt;</code></td><td><code>T get()</code></td><td>Wert bereitstellen</td></tr><tr><td><code>Comparator&lt;T&gt;</code></td><td><code>int compare(T a,T b)</code></td><td>Zwei Werte ordnen</td></tr></table><pre class="copyable">Predicate&lt;String&gt; longName = name -&gt; name.length() &gt;= 5;
 Consumer&lt;String&gt; print = name -&gt; System.out.println(name);
 Function&lt;String, Integer&gt; length = name -&gt; name.length();
 Supplier&lt;String&gt; greeting = () -&gt; "Hallo";
@@ -61,10 +59,10 @@ System.out.println(longName.test("Anna")); // false
 print.accept("Anna");                    // Anna
 System.out.println(length.apply("Anna")); // 4
 System.out.println(greeting.get());       // Hallo</pre></section>
-<section id="listen"><h2>Lambdas mit Listen</h2><h3>forEach: Elemente verarbeiten</h3><p><code>forEach</code> erwartet einen <code>Consumer</code>.</p><pre class="copyable">names.forEach(name -&gt; System.out.println(name));</pre><h3>removeIf: Elemente entfernen</h3><p><code>removeIf</code> erwartet ein <code>Predicate</code>.</p><pre class="copyable">List&lt;String&gt; names = new ArrayList&lt;&gt;(List.of("Anna", "Ben", "Alex"));
+<section id="listen" class="card"><h2>Lambdas mit Listen</h2><h3>forEach: Elemente verarbeiten</h3><p><code>forEach</code> erwartet einen <code>Consumer</code>.</p><pre class="copyable">names.forEach(name -&gt; System.out.println(name));</pre><h3>removeIf: Elemente entfernen</h3><p><code>removeIf</code> erwartet ein <code>Predicate</code>.</p><pre class="copyable">List&lt;String&gt; names = new ArrayList&lt;&gt;(List.of("Anna", "Ben", "Alex"));
 names.removeIf(name -&gt; name.startsWith("A"));
 System.out.println(names); // [Ben]</pre><h3>replaceAll: Elemente ersetzen</h3><pre class="copyable">names.replaceAll(name -&gt; name.toUpperCase(java.util.Locale.ROOT));</pre><p><code>sort</code>, <code>removeIf</code> und <code>replaceAll</code> verändern die Liste. <code>List.of()</code> allein erzeugt eine unveränderbare Liste.</p></section>
-<section id="comparator"><h2>Employee sortieren</h2><p>Dieses vollständige Beispiel verbindet die natürliche Ordnung aus Collections mit einem Lambda-Comparator. Speichere es als <code>LambdaDemo.java</code>. Bei gleichem Namen sortiert der Comparator zusätzlich nach Dienstjahren.</p><pre class="copyable">import java.util.ArrayList;
+<section id="comparator" class="card"><h2>Employee sortieren</h2><p>Dieses vollständige Beispiel verbindet die natürliche Ordnung aus Collections mit einem Lambda-Comparator. Speichere es als <code>LambdaDemo.java</code>. Bei gleichem Namen sortiert der Comparator zusätzlich nach Dienstjahren.</p><pre class="copyable">import java.util.ArrayList;
 import java.util.List;
 
 class Employee implements Comparable&lt;Employee&gt; {
@@ -143,10 +141,10 @@ System.out.println(employees); // [Anna (2), Anna (7), Ben (3)]</pre>
 <div class="note"><strong>Merke:</strong> <code>Comparator.comparing()</code> erhält eine Funktion zum Auslesen eines Sortierschlüssels und baut daraus einen Comparator. Das Lambda <code>e -&gt; e.name</code> ist selbst <strong>kein Comparator</strong>.</div>
 <p>Für diesen Zusatzabschnitt benötigst du außerdem <code>import java.util.Comparator;</code> und für die ausdrücklich deklarierte Function <code>import java.util.function.Function;</code>. Die Beispiele der Schritte 1–3 sind alternative Ausschnitte, die du innerhalb von <code>main</code> verwenden kannst.</p>
 </section>
-<section id="variablen"><h2>Lokale Variablen verwenden</h2><p>Ein Lambda darf lokale Variablen aus seiner Umgebung lesen, wenn diese <code>final</code> oder effektiv final sind: Ihr Wert wird nach der Initialisierung nicht erneut zugewiesen.</p><pre class="copyable">int minLength = 4;
+<section id="variablen" class="card"><h2>Lokale Variablen verwenden</h2><p>Ein Lambda darf lokale Variablen aus seiner Umgebung lesen, wenn diese <code>final</code> oder effektiv final sind: Ihr Wert wird nach der Initialisierung nicht erneut zugewiesen.</p><pre class="copyable">int minLength = 4;
 Predicate&lt;String&gt; longEnough = name -&gt; name.length() &gt;= minLength;
 System.out.println(longEnough.test("Anna")); // true</pre><p>Würde zusätzlich <code>minLength++;</code> stehen, wäre die übernommene Variable nicht effektiv final. Bei Referenzen darf sich das referenzierte Objekt dennoch verändern.</p></section>
-<section id="methoden"><h2>Ausblick: Methodenreferenzen</h2><p>Wenn ein Lambda nur eine vorhandene Methode passend weiterleitet, kann oft eine Methodenreferenz mit <code>::</code> verwendet werden.</p><pre class="copyable">Consumer&lt;String&gt; print = text -&gt; System.out.println(text);
+<section id="methoden" class="card"><h2>Ausblick: Methodenreferenzen</h2><p>Wenn ein Lambda nur eine vorhandene Methode passend weiterleitet, kann oft eine Methodenreferenz mit <code>::</code> verwendet werden.</p><pre class="copyable">Consumer&lt;String&gt; print = text -&gt; System.out.println(text);
 Consumer&lt;String&gt; print2 = System.out::println;
 
 Function&lt;String, Integer&gt; length = text -&gt; text.length();
@@ -154,7 +152,7 @@ Function&lt;String, Integer&gt; length2 = String::length;
 
 Comparator&lt;Integer&gt; cmp = (a, b) -&gt; Integer.compare(a, b);
 Comparator&lt;Integer&gt; cmp2 = Integer::compare;</pre><p>Bei <code>System.out::println</code> wird eine Methode eines vorhandenen Objekts verwendet; bei <code>String::length</code> die Methode des übergebenen Strings; bei <code>Integer::compare</code> eine statische Methode.</p></section>
-<section id="uebungen"><h2>Übungen</h2><p>Nutze bei Bedarf die Beispiele aus dem Theorieabschnitt. Für Standard-Interfaces importiere die benötigten Typen aus <code>java.util.function</code>, für Listen und Comparator aus <code>java.util</code>. Ausschnitte mit Aufrufen gehören in <code>main</code>.</p><div id="tasks"></div></section>
+<section id="uebungen" class="card"><h2>Übungen</h2><p>Nutze bei Bedarf die Beispiele aus dem Theorieabschnitt. Für Standard-Interfaces importiere die benötigten Typen aus <code>java.util.function</code>, für Listen und Comparator aus <code>java.util</code>. Ausschnitte mit Aufrufen gehören in <code>main</code>.</p><div id="tasks"></div></section>
 </main><footer>Java Lambdas · <a href="https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html">Oracle: Lambda Expressions</a></footer>
 <script>
 const tasks = [
@@ -174,10 +172,27 @@ const tasks = [
 ];
 const escapeHtml=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const root=document.getElementById('tasks');
-tasks.forEach(([title,description,hint,explanation,solution],i)=>{const card=document.createElement('div');card.className='exercise';card.innerHTML=`<h3>${i+1}. ${title}</h3><p>${description}</p><div class="toggles"><button class="toggle" type="button" data-target="hint-${i}" aria-expanded="false">Hinweis anzeigen</button><button class="toggle" type="button" data-target="solution-${i}" aria-expanded="false">Lösung anzeigen</button></div><div class="reveal" id="hint-${i}" hidden>${hint}</div><div class="reveal" id="solution-${i}" hidden>${explanation?'<p>'+explanation+'</p>':''}<pre class="copyable">${escapeHtml(solution)}</pre></div>`;root.append(card)});
-document.addEventListener('click',e=>{const t=e.target.closest('button.toggle');if(t){const target=document.getElementById(t.dataset.target);target.hidden=!target.hidden;t.setAttribute('aria-expanded',String(!target.hidden));t.textContent=(t.dataset.target.startsWith('hint')?'Hinweis':'Lösung')+(target.hidden?' anzeigen':' verbergen')}const c=e.target.closest('.copy-btn');if(c){const value=c.parentElement.textContent.replace(/^Kopieren/,'');navigator.clipboard.writeText(value).then(()=>{c.textContent='Kopiert!';setTimeout(()=>c.textContent='Kopieren',1200)})}});
-document.querySelectorAll('pre.copyable').forEach(pre=>{const btn=document.createElement('button');btn.className='copy-btn';btn.type='button';btn.textContent='Kopieren';pre.prepend(btn)});
-// Buttons in nachträglich geöffneten Übungslösungen ebenfalls ergänzen.
-new MutationObserver(()=>document.querySelectorAll('pre.copyable:not(:has(.copy-btn))').forEach(pre=>{const b=document.createElement('button');b.type='button';b.className='copy-btn';b.textContent='Kopieren';pre.prepend(b)})).observe(root,{childList:true,subtree:true});
+tasks.forEach(([title,description,hint,explanation,solution],i)=>{
+  const card=document.createElement('article');
+  const n=i+1;
+  card.innerHTML=`<h3>${n}. ${title}</h3><p>${description}</p>`;
+  const hintButton=document.createElement('button');
+  hintButton.textContent='Hinweis anzeigen';
+  hintButton.setAttribute('onclick',`toggleSolution('lambda-hint-${n}')`);
+  const hintDiv=document.createElement('div');
+  hintDiv.id=`lambda-hint-${n}`;
+  hintDiv.className='solution';
+  hintDiv.innerHTML=`<p>${hint}</p>`;
+  const solutionButton=document.createElement('button');
+  solutionButton.textContent='Lösung anzeigen';
+  solutionButton.setAttribute('onclick',`toggleSolution('lambda-solution-${n}')`);
+  const solutionDiv=document.createElement('div');
+  solutionDiv.id=`lambda-solution-${n}`;
+  solutionDiv.className='solution';
+  solutionDiv.innerHTML=`${explanation?'<p>'+explanation+'</p>':''}<pre class="copyable">${escapeHtml(solution)}</pre>`;
+  card.append(hintButton,hintDiv,solutionButton,solutionDiv);
+  root.append(card);
+});
 </script>
+<script src="script.js"></script>
 </body></html>
