@@ -138,8 +138,45 @@ employees.sort(byName);</pre>
 employees.sort(cmp);
 System.out.println(employees); // [Anna (2), Anna (7), Ben (3)]</pre>
 <p><code>thenComparingInt</code> wird nur dann für die Sortierreihenfolge entscheidend, wenn zwei Namen gleich sind. Es liest die Dienstjahre aus und vergleicht sie als <code>int</code>. Die gesamte Sortierregel ist damit <strong>dieselbe wie beim vorherigen Lambda-Comparator</strong> – nur ohne selbst geschriebenes <code>if</code>.</p>
-<table><tr><th>Bisher: Vergleich selbst programmieren</th><th>Neu: Sortierschlüssel angeben</th></tr><tr><td><code>(e1, e2) -&gt; ...</code></td><td><code>e -&gt; e.name</code></td></tr><tr><td>Zwei Employee-Parameter</td><td>Ein Employee-Parameter</td></tr><tr><td>Lambda implementiert <code>Comparator.compare()</code></td><td>Lambda implementiert <code>Function.apply()</code></td></tr><tr><td>Lambda liefert einen Vergleichswert</td><td>Lambda liefert einen Sortierschlüssel</td></tr><tr><td>Zweiten Vergleich selbst mit <code>if</code> behandeln</td><td><code>thenComparingInt()</code> ergänzt die zweite Regel</td></tr></table>
-<div class="note"><strong>Merke:</strong> <code>Comparator.comparing()</code> erhält eine Funktion zum Auslesen eines Sortierschlüssels und baut daraus einen Comparator. Das Lambda <code>e -&gt; e.name</code> ist selbst <strong>kein Comparator</strong>.</div>
+
+<table class="protocol-table">
+  <thead>
+    <tr>
+      <th>Bisher: Vergleich selbst programmieren</th>
+      <th>Neu: Sortierschlüssel angeben</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>(e1, e2) -&gt; ...</code></td>
+      <td><code>e -&gt; e.name</code></td>
+    </tr>
+    <tr>
+      <td>Zwei Employee-Parameter</td>
+      <td>Ein Employee-Parameter</td>
+    </tr>
+    <tr>
+      <td>Lambda implementiert <code>Comparator.compare()</code></td>
+      <td>Lambda implementiert <code>Function.apply()</code></td>
+    </tr>
+    <tr>
+      <td>Lambda liefert einen Vergleichswert</td>
+      <td>Lambda liefert einen Sortierschlüssel</td>
+    </tr>
+    <tr>
+      <td>Zweiten Vergleich selbst mit <code>if</code> behandeln</td>
+      <td><code>thenComparingInt()</code> ergänzt die zweite Regel</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Merke:</strong>
+  <code>Comparator.comparing()</code> erhält eine Funktion
+  zum Auslesen eines Sortierschlüssels und baut daraus
+  einen Comparator. Das Lambda <code>e -&gt; e.name</code>
+  ist selbst <strong>kein Comparator</strong>.
+</p>
+
 <p>Für diesen Zusatzabschnitt benötigst du außerdem <code>import java.util.Comparator;</code> und für die ausdrücklich deklarierte Function <code>import java.util.function.Function;</code>. Die Beispiele der Schritte 1–3 sind alternative Ausschnitte, die du innerhalb von <code>main</code> verwenden kannst.</p>
 </section>
 <section id="variablen" class="card"><h2>Lokale Variablen verwenden</h2><p>Ein Lambda darf lokale Variablen aus seiner Umgebung lesen, wenn diese <code>final</code> oder effektiv final sind: Ihr Wert wird nach der Initialisierung nicht erneut zugewiesen.</p><pre class="copyable">int minLength = 4;
