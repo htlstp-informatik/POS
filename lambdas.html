@@ -191,7 +191,10 @@ tasks.forEach(([title,description,hint,explanation,solution],i)=>{
   solutionDiv.id=`lambda-solution-${n}`;
   solutionDiv.className='solution';
   solutionDiv.innerHTML=`${explanation?'<p>'+explanation+'</p>':''}<pre class="copyable">${escapeHtml(solution)}</pre>`;
-  card.append(hintButton,hintDiv,solutionButton,solutionDiv);
+  const actions=document.createElement('div');
+  actions.className='task-actions';
+  actions.append(hintButton,solutionButton);
+  card.append(actions,hintDiv,solutionDiv);
   root.append(card);
 });
 </script>
