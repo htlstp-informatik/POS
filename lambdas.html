@@ -62,7 +62,7 @@ System.out.println(length.apply("Anna")); // 4
 System.out.println(greeting.get());       // Hallo</pre></section>
 <section id="listen" class="card"><h2>Lambdas mit Listen</h2><h3>forEach: Elemente verarbeiten</h3><p><code>forEach</code> erwartet einen <code>Consumer</code>.</p><pre class="copyable">names.forEach(name -&gt; System.out.println(name));</pre><h3>removeIf: Elemente entfernen</h3><p><code>removeIf</code> erwartet ein <code>Predicate</code>.</p><pre class="copyable">List&lt;String&gt; names = new ArrayList&lt;&gt;(List.of("Anna", "Ben", "Alex"));
 names.removeIf(name -&gt; name.startsWith("A"));
-System.out.println(names); // [Ben]</pre><h3>replaceAll: Elemente ersetzen</h3><pre class="copyable">names.replaceAll(name -&gt; name.toUpperCase(java.util.Locale.ROOT));</pre><p><code>sort</code>, <code>removeIf</code> und <code>replaceAll</code> verändern die Liste. <code>List.of()</code> allein erzeugt eine unveränderbare Liste.</p></section>
+System.out.println(names); // [Ben]</pre><h3>replaceAll: Elemente ersetzen</h3><pre class="copyable">names.replaceAll(name -&gt; name.toUpperCase());</pre><p><code>sort</code>, <code>removeIf</code> und <code>replaceAll</code> verändern die Liste. <code>List.of()</code> allein erzeugt eine unveränderbare Liste.</p></section>
 <section id="comparator" class="card"><h2>Employee sortieren</h2><p>Dieses vollständige Beispiel verbindet die natürliche Ordnung aus Collections mit einem Lambda-Comparator. Speichere es als <code>LambdaDemo.java</code>. Bei gleichem Namen sortiert der Comparator zusätzlich nach Dienstjahren.</p><pre class="copyable">import java.util.ArrayList;
 import java.util.List;
 
@@ -271,7 +271,7 @@ System.out.println(names); // [ANNA, CLARA]</pre></div>
 </article>
 <article>
   <h3>9. Eigenes Interface</h3>
-  <p>Verwende <code>IntOperation</code> aus dem Theorieabschnitt. Definiere ein Lambda, das den größeren Wert zurückgibt, und übergib es an <code>calculate</code>.</p>
+  <p>Verwende <code>IntOperation</code> aus dem Theorieabschnitt oben. Definiere ein Lambda, das den größeren Wert zurückgibt, und übergib es an <code>calculate</code>.</p>
   <button onclick="toggleSolution('lambda-hint-9')">Hinweis anzeigen</button>
   <div id="lambda-hint-9" class="solution"><p>Math.max liefert den größeren int-Wert.</p></div>
   <button onclick="toggleSolution('lambda-solution-9')">Lösung anzeigen</button>
