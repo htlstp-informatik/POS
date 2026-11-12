@@ -1,0 +1,190 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Java Serialization · POS</title><link rel="stylesheet" href="style.css"></head><body><header><h1>Java Serialization</h1><p>Objekte speichern und wiederherstellen</p></header><nav><a href="index.html">Start</a><a href="io-streams.html">I/O-Streams</a><a href="#grundlagen">Grundlagen</a><a href="#objekte">Objekte</a><a href="#custom">Anpassen</a><a href="#uebungen">Übungen</a></nav><main><section class="intro"><h2>Was ist Serialisierung?</h2><p>Serialisierung wandelt den Zustand eines Java-Objekts in eine Bytefolge um. Deserialisierung stellt daraus ein Objekt wieder her. Anwendungen sind Dateien, Netzwerkübertragung und Kommunikation zwischen Programmen.</p><p><strong>Objekt → ObjectOutputStream → Bytefolge → ObjectInputStream → Objekt</strong></p><p>Die Datei enthält Daten und Klasseninformationen, aber nicht den Java-Quellcode oder die Implementierung der Methoden. Die passende Klasse muss beim Einlesen verfügbar sein.</p></section><section class="card" id="grundlagen"><h2>Grundlagen und Methoden</h2>
+<h3>Warum nicht einfach DataOutputStream?</h3>
+<p>Mit DataOutputStream müssen wir jedes Feld selbst schreiben und in derselben Reihenfolge lesen. Bei referenzierten Objekten müssen wir auch deren Format festlegen. Das folgende Beispiel speichert einen Namen und ein Alter manuell.</p>
+<pre class="copyable">try (DataOutputStream out = new DataOutputStream(new FileOutputStream(&quot;manual.bin&quot;))) {
+    out.writeUTF(&quot;Anna&quot;);
+    out.writeInt(25);
+}
+try (DataInputStream in = new DataInputStream(new FileInputStream(&quot;manual.bin&quot;))) {
+    System.out.println(in.readUTF()); // Anna
+    System.out.println(in.readInt()); // 25
+}</pre>
+<p>Bei einer Adresse müssten weitere Felder in einer vereinbarten Reihenfolge folgen. writeUTF enthält eine Längenangabe; readAllBytes wäre hier ungeeignet, wenn danach noch andere Felder folgen. Java-Serialisierung übernimmt die Verwaltung des Objektgraphen.</p>
+<h3>Serializable – Marker-Interface</h3>
+<p>Serializable aus java.io enthält keine Methoden. Die Klasse signalisiert damit, dass ihre Instanzen durch die Java-Objektserialisierung gespeichert werden dürfen. Ohne diese Kennzeichnung führt writeObject bei einem gewöhnlichen nicht serialisierbaren Objekt zu einer NotSerializableException.</p>
+<pre class="copyable">import java.io.*;
+
+class Person implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+    String name;
+    int age;
+
+    Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}</pre>
+<h3>ObjectOutputStream und ObjectInputStream</h3>
+<p>Der ObjectOutputStream umwickelt einen OutputStream, der die Bytes zum Ziel transportiert. Sein Konstruktor schreibt bereits einen Stream-Header. ObjectInputStream liest und prüft diesen Header beim Erzeugen. Ein leerer oder falscher Stream kann daher bereits beim Konstruktor eine Exception auslösen.</p>
+<pre class="copyable">// In main mit throws IOException, ClassNotFoundException
+Person p = new Person(&quot;Anna&quot;, 25);
+try (FileOutputStream fos = new FileOutputStream(&quot;person.ser&quot;);
+     ObjectOutputStream out = new ObjectOutputStream(fos)) {
+    out.writeObject(p);
+}
+try (FileInputStream fis = new FileInputStream(&quot;person.ser&quot;);
+     ObjectInputStream in = new ObjectInputStream(fis)) {
+    Person loaded = (Person) in.readObject();
+    System.out.println(loaded.name); // Anna
+    System.out.println(loaded.age);  // 25
+    System.out.println(p == loaded); // false
+}</pre>
+<p>writeObject(Object) schreibt den Zustand des Objekts und seiner serialisierbaren Referenzen. readObject() liefert Object, weil der Stream verschiedene Klassen enthalten kann. Der Cast zu Person ist nötig, um Person-Felder zu verwenden; bei einem falschen Typ entsteht eine ClassCastException. ClassNotFoundException bedeutet, dass eine benötigte Klasse nicht geladen werden konnte. IOException signalisiert etwa beschädigte Daten oder I/O-Fehler.</p>
+<h3>Methoden im Überblick</h3>
+<table><thead><tr><th>Methode</th><th>Erklärung</th></tr></thead><tbody><tr><td>writeObject(obj)</td><td>Serialisiert ein Objekt oder null; merkt sich Objektidentitäten.</td></tr><tr><td>readObject()</td><td>Liest das nächste Objekt; liefert Object oder null. Am Dateiende kann EOFException auftreten.</td></tr><tr><td>writeInt / readInt</td><td>Schreibt bzw. liest einen primitiven int im Objektstream. Reihenfolge muss übereinstimmen.</td></tr><tr><td>defaultWriteObject()</td><td>Speichert Standardfelder der aktuellen Klasse innerhalb ihrer eigenen writeObject-Methode.</td></tr><tr><td>defaultReadObject()</td><td>Liest diese Standardfelder innerhalb ihrer eigenen readObject-Methode.</td></tr><tr><td>reset()</td><td>Vergisst bereits geschriebene Objektreferenzen, damit sie erneut vollständig geschrieben werden.</td></tr><tr><td>flush()</td><td>Gibt gepufferte Daten an den darunterliegenden Stream weiter; garantiert keine physische Speicherung.</td></tr><tr><td>close()</td><td>Schließt den Stream und den darunterliegenden Stream. try-with-resources erledigt dies automatisch.</td></tr></tbody></table>
+<h3>reset(): Warum wird ein verändertes Objekt nicht erneut gespeichert?</h3>
+<p>Der Stream merkt sich bereits geschriebene Objekte anhand ihrer Identität. Beim zweiten writeObject mit derselben Referenz schreibt er normalerweise nur einen Verweis auf das erste Objekt. Das spart Platz und erhält gemeinsame Referenzen. reset() löscht diese Zuordnung, nicht die bisherigen Dateidaten.</p>
+<pre class="copyable">Person p = new Person(&quot;Anna&quot;, 25);
+try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(&quot;reset.ser&quot;))) {
+    out.writeObject(p);
+    p.age = 30;
+    out.writeObject(p); // nur Referenz auf das erste Objekt
+    out.reset();
+    out.writeObject(p); // neuer Zustand
+}
+try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(&quot;reset.ser&quot;))) {
+    Person a = (Person) in.readObject();
+    Person b = (Person) in.readObject();
+    Person c = (Person) in.readObject();
+    System.out.println(a.age); // 25
+    System.out.println(b.age); // 25
+    System.out.println(c.age); // 30
+    System.out.println(a == b); // true
+    System.out.println(a == c); // false
+}</pre>
+<p>reset ist nicht mit InputStream.reset zu verwechseln: Es springt nicht zu einer früheren Position. Beim Lesen werden die Referenztabellen an der Reset-Markierung ebenfalls zurückgesetzt. Mehrere Objekte sollten mit demselben ObjectOutputStream geschrieben werden; einfaches Anhängen mit einem neuen ObjectOutputStream erzeugt einen zusätzlichen Header und ist nicht ohne Weiteres lesbar.</p>
+<h2 id="objekte">Welche Daten werden gespeichert?</h2>
+<p>Standardmäßig werden Klasseninformationen und nicht statische, nicht transiente Instanzfelder gespeichert. Referenzierte Objekte werden rekursiv verarbeitet. static gehört zur Klasse, nicht zum einzelnen Objekt. transient schließt ein Feld von der Standardserialisierung aus. Methoden werden nicht gespeichert.</p>
+<pre class="copyable">class Address implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    String city = &quot;Krems&quot;;
+}
+class Customer implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    String name = &quot;Anna&quot;;
+    Address address = new Address();
+    transient String password = &quot;secret&quot;;
+    static int counter = 5;
+}</pre>
+<p>Nach dem Einlesen ist address.city weiterhin Krems, password hingegen null. Wäre Address nicht serialisierbar, würde writeObject bei einer nicht-null Referenz scheitern. Eine transiente Referenz oder null verhindert diesen Fehler. Threads und Sockets sind typische nicht serialisierbare Ressourcen. Gemeinsame Referenzen und zyklische Objektgraphen werden unterstützt.</p>
+<h3>transient und Standardwerte</h3>
+<p>Bei gewöhnlichen Serializable-Klassen werden Konstruktoren und Feldinitialisierungen der serialisierbaren Klassen beim Einlesen nicht ausgeführt. Ein transientes int-Feld erhält 0, boolean false und Referenzen null. Auch ein Feld mit Initialisierung transient int age = 25 wird standardmäßig als 0 wiederhergestellt. transient ist keine Verschlüsselung und schützt nicht vor explizitem Speichern.</p>
+<h3>Vererbung</h3>
+<pre class="copyable">class Base {
+    int x = 10;
+    Base() { System.out.println(&quot;Base&quot;); }
+}
+class Student extends Base implements Serializable {
+    @Serial private static final long serialVersionUID = 1L;
+    String id;
+    Student(String id) {
+        this.id = id;
+        System.out.println(&quot;Student&quot;);
+    }
+}
+class InformatikStudent extends Student {
+    @Serial private static final long serialVersionUID = 1L;
+    InformatikStudent(String id) { super(id); }
+}</pre>
+<p>Serializable wird vererbt. Beim Deserialisieren eines InformatikStudent wird der zugängliche parameterlose Konstruktor der ersten nicht serialisierbaren Superklasse Base ausgeführt, nicht der Konstruktor von Student oder InformatikStudent. Base.x wird nicht standardmäßig gespeichert; es wird durch Base initialisiert. Fehlt der zugängliche parameterlose Konstruktor, kann InvalidClassException auftreten. Bei new InformatikStudent laufen dagegen die normalen Konstruktoren.</p>
+<h2 id="custom">Serialisierung beeinflussen</h2>
+<p>Java erkennt zwei spezielle private Methoden anhand ihrer exakten Signaturen. Sie sind keine Methoden des Marker-Interfaces und werden automatisch durch die Objektstreams aufgerufen. @Serial hilft, die Signaturen zu prüfen.</p>
+<pre class="copyable">@Serial
+private void writeObject(ObjectOutputStream out) throws IOException {
+    out.defaultWriteObject(); // Standardfelder dieser Klasse
+    out.writeInt(counter);   // zusätzlich ein statisches Feld
+}
+@Serial
+private void readObject(ObjectInputStream in)
+        throws IOException, ClassNotFoundException {
+    in.defaultReadObject(); // Standardfelder wiederherstellen
+    counter = in.readInt(); // statischen Wert explizit setzen
+}</pre>
+<p>Die Reihenfolge muss übereinstimmen. defaultWriteObject und defaultReadObject dürfen nur im jeweiligen Serialisierungs-Callback verwendet werden. Ohne diese Aufrufe werden die Standardfelder nicht automatisch durch den eigenen Callback verarbeitet. Man kann auch transiente Felder explizit speichern oder abgeleitete Werte beim Lesen berechnen. Ein Caesar-Verfahren aus den Folien wäre nur ein Lernbeispiel, keine sichere Verschlüsselung.</p>
+<h3>serialVersionUID</h3>
+<p>Die Kennung dient zur Versionsprüfung. Ist die Kennung der gespeicherten Klasse ungleich der aktuell geladenen Klasse, entsteht normalerweise InvalidClassException. Eine gleiche Kennung garantiert aber nicht, dass jede Klassenänderung kompatibel ist. Ohne explizite Kennung berechnet die Serialisierung eine Standardkennung aus Klassendetails; IntelliJ kann eine Deklaration generieren.</p>
+<pre class="copyable">@Serial
+private static final long serialVersionUID = 1L;</pre>
+<p>Bei kompatiblen Änderungen, etwa einem neuen Feld, kann die Kennung gleich bleiben; ein neu hinzugefügtes Feld erhält beim Lesen alter Daten seinen Standardwert. Bei bewusst inkompatiblen Änderungen kann die Kennung erhöht werden.</p>
+<h3>Sicherheit</h3>
+<p>Nur vertrauenswürdige Daten deserialisieren. readObject-Callbacks vorhandener Klassen können beim Einlesen unerwünschte Aktionen auslösen; manipulierte Objektgraphen können Speicher oder CPU überlasten. ObjectInputFilter kann Klassen und Größen begrenzen, ersetzt aber keine Vertrauensprüfung. JSON und Protobuf sind häufig geeignete Alternativen für Datenaustausch; auch deren Eingaben müssen validiert werden.</p>
+<h2 id="uebungen">Übungen</h2>
+<article><h3>1. Person serialisieren</h3><p>Erstelle Person mit name (String) und age (int). Markiere age als transient. Speichere ein selbst gewähltes Objekt in person.ser und lade es wieder. Prüfe beide Felder.</p><div class="task-actions"><button onclick="toggleSolution('hint-1')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-1')">Lösung anzeigen</button></div><div class="solution" id="hint-1"><p>Implementiere Serializable. Verwende writeObject und readObject. age wird nicht standardmäßig gespeichert.</p></div><div class="solution" id="solution-1">
+<pre class="copyable">import java.io.*;
+
+public class Main {
+    static class Person implements Serializable {
+        @Serial private static final long serialVersionUID = 1L;
+        String name;
+        transient int age;
+        Person(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
+    }
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        Person p = new Person(&quot;Anna&quot;, 25);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(&quot;person.ser&quot;))) {
+            out.writeObject(p);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(&quot;person.ser&quot;))) {
+            Person loaded = (Person) in.readObject();
+            System.out.println(loaded.name); // Anna
+            System.out.println(loaded.age); // 0
+        }
+    }
+}</pre>
+</div></article>
+<article><h3>2. Statischen counter übertragen</h3><p>Erweitere Person um einen statischen counter, der bei jeder Erzeugung mit new erhöht wird. Speichere den counter explizit und stelle ihn beim Laden wieder her. Setze ihn vor dem Einlesen auf 0, um die Wiederherstellung zu prüfen.</p><div class="task-actions"><button onclick="toggleSolution('hint-2')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-2')">Lösung anzeigen</button></div><div class="solution" id="hint-2"><p>Eigene private writeObject/readObject-Methoden verwenden. Erst Standardfelder, dann counter. Der Person-Konstruktor wird beim Einlesen nicht aufgerufen.</p></div><div class="solution" id="solution-2">
+<pre class="copyable">import java.io.*;
+
+public class Main {
+    static class Person implements Serializable {
+        @Serial private static final long serialVersionUID = 1L;
+        String name;
+        transient int age;
+        static int counter;
+        Person(String name, int age) {
+            this.name = name;
+            this.age = age;
+            counter++;
+        }
+        @Serial
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            out.defaultWriteObject();
+            out.writeInt(counter);
+        }
+        @Serial
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            in.defaultReadObject();
+            counter = in.readInt();
+        }
+    }
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        Person p = new Person(&quot;Anna&quot;, 25);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(&quot;person.ser&quot;))) {
+            out.writeObject(p);
+        }
+        Person.counter = 0; // simuliert einen neuen Programmstart
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(&quot;person.ser&quot;))) {
+            Person loaded = (Person) in.readObject();
+            System.out.println(loaded.name); // Anna
+            System.out.println(loaded.age); // 0
+            System.out.println(Person.counter); // 1
+        }
+    }
+}</pre>
+</div></article>
+<p>Hinweis zur zweiten Übung: Der gespeicherte counter ist eine Momentaufnahme des Klassenzustands. Das Laden überschreibt den aktuellen statischen Wert für alle Person-Objekte. Das ist hier ausdrücklich gewünscht, wäre aber in einer echten Anwendung mit mehreren gespeicherten Objekten sorgfältig zu planen. Beide Lösungen sind eigenständige Main.java-Dateien; die zweite überschreibt person.ser mit ihrem eigenen Format.</p>
+</section></main><script src="script.js"></script></body></html>
