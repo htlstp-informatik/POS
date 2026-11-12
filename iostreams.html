@@ -18,7 +18,7 @@ public class Main {
 <pre class="copyable">try (OutputStream out = new FileOutputStream(&quot;data.bin&quot;)) {
     out.write(65);
     out.write(255);
-    out.write(0x12345678); // nur niederwertigste Byte wird geschrieben - 0x78 = 120
+    out.write(0x12345678); // nur 0x78 = 120
 }
 try (InputStream in = new FileInputStream(&quot;data.bin&quot;)) {
     int b;
@@ -35,7 +35,37 @@ try (InputStream in = new FileInputStream(&quot;data.bin&quot;)) {
         out.write(buffer, 0, n);
     }
 }</pre>
-<p>read(buffer) liefert die tatsächlich gelesene Anzahl, nicht unbedingt die Arraylänge. Deshalb nur n Bytes schreiben. skip(n) überspringt bis zu n Bytes; available() ist keine zuverlässige Dateigröße und kein EOF-Test. flush() gibt gepufferte Daten weiter, garantiert aber keine physische Speicherung. mark(), reset() und markSupported() erlauben bei unterstützten Streams das Zurückspringen zu einer Marke.</p><h3>Streams im Speicher</h3>
+<p>read(buffer) liefert die tatsächlich gelesene Anzahl, nicht unbedingt die Arraylänge. Deshalb nur n Bytes schreiben. Bei einem Array mit 4096 Elementen können beispielsweise beim letzten Lesen nur noch 12 Bytes zurückgegeben werden.</p>
+<h3>Die wichtigsten Methoden von InputStream</h3>
+<table><thead><tr><th>Methode</th><th>Bedeutung</th></tr></thead><tbody><tr><td>read()</td><td>Liest ein Byte als int (0 bis 255), am Ende -1.</td></tr><tr><td>read(byte[] b)</td><td>Liest bis zu b.length Bytes; liefert die Anzahl oder -1.</td></tr><tr><td>read(byte[] b, int off, int len)</td><td>Liest bis zu len Bytes in das Array ab Index off.</td></tr><tr><td>skip(long n)</td><td>Überspringt bis zu n Bytes; liefert die tatsächlich übersprungene Anzahl.</td></tr><tr><td>available()</td><td>Schätzt, wie viele Bytes ohne Blockieren gelesen werden können.</td></tr><tr><td>close()</td><td>Schließt den Stream und gibt Ressourcen frei.</td></tr></tbody></table>
+<h3>skip(): Bytes überspringen</h3><p>skip(n) bewegt die Leseposition vorwärts, ohne die übersprungenen Bytes an das Programm zurückzugeben. Das ist beispielsweise nützlich, wenn ein Dateiformat einen Header enthält, den man nicht benötigt. Die Methode garantiert nicht, dass n Bytes übersprungen werden.</p><pre class="copyable">byte[] data = {10, 20, 30, 40, 50};
+try (InputStream in = new ByteArrayInputStream(data)) {
+    System.out.println(in.read());  // 10
+    System.out.println(in.skip(2)); // 2 (20 und 30 übersprungen)
+    System.out.println(in.read());  // 40
+    System.out.println(in.skip(9)); // 1 (nur 50 übrig)
+    System.out.println(in.read());  // -1
+}</pre><p>Mit skipNBytes(n) (seit Java 12) müssen genau n Bytes übersprungen werden; andernfalls wird eine EOFException geworfen.</p>
+<h3>mark(), reset() und markSupported()</h3><p>mark(readlimit) merkt sich die aktuelle Leseposition. reset() springt zu dieser Position zurück. readlimit gibt an, wie viele Bytes nach der Markierung gelesen werden dürfen, bevor die Markierung ungültig werden kann. Eine neue Markierung ersetzt die alte. Nicht alle Streams unterstützen diese Methoden: FileInputStream beispielsweise nicht, BufferedInputStream hingegen schon.</p><pre class="copyable">try (InputStream in = new BufferedInputStream(
+        new ByteArrayInputStream(new byte[] {10, 20, 30, 40, 50}))) {
+    System.out.println(in.markSupported()); // true
+    System.out.println(in.read()); // 10
+    in.mark(3);                    // Position vor 20 merken
+    System.out.println(in.read()); // 20
+    System.out.println(in.read()); // 30
+    in.reset();                    // zurück vor 20
+    System.out.println(in.read()); // 20
+}</pre><p>Wozu? Beispielsweise kann man die ersten Bytes eines Dateiformats prüfen und anschließend dieselben Bytes erneut lesen. reset() kann eine IOException werfen, wenn keine gültige Markierung vorhanden ist. ByteArrayInputStream ignoriert das readlimit; bei BufferedInputStream kann die Marke nach Überschreiten des Limits verloren gehen.</p>
+<h3>available(): Lesen ohne Warten</h3><p>available() liefert eine Schätzung der Anzahl der Bytes, die ohne Blockieren gelesen oder übersprungen werden können. Bei Netzwerkverbindungen kann der Wert 0 sein, obwohl später weitere Daten eintreffen. Daher ist available() weder ein allgemeiner EOF-Test noch eine zuverlässige Dateigröße.</p><pre class="copyable">try (InputStream in = new ByteArrayInputStream(new byte[] {10, 20, 30})) {
+    System.out.println(in.available()); // 3
+    in.read();
+    System.out.println(in.available()); // 2
+}</pre><h3>OutputStream: write(), flush() und close()</h3><p>write(int) schreibt ein Byte; write(byte[]) schreibt das gesamte Array; write(byte[], off, len) schreibt len Bytes ab Arrayindex off. flush() gibt gepufferte Daten an den darunterliegenden Stream weiter. Das ist wichtig, wenn Daten sofort weitergegeben werden sollen, etwa bei einer Netzwerkverbindung. Es garantiert keine physische Speicherung auf dem Datenträger. close() schließt die Ressource; BufferedOutputStream leert dabei auch seinen Puffer.</p><pre class="copyable">try (OutputStream out = new BufferedOutputStream(
+        new FileOutputStream(&quot;buffered.bin&quot;))) {
+    byte[] data = {10, 20, 30, 40};
+    out.write(data, 1, 2); // schreibt 20 und 30
+    out.flush();         // Puffer an FileOutputStream weitergeben
+} // close() automatisch</pre><h3>Streams im Speicher</h3>
 <pre class="copyable">ByteArrayOutputStream out = new ByteArrayOutputStream();
 out.write(new byte[] {65, 66, 67});
 byte[] bytes = out.toByteArray();
@@ -76,7 +106,14 @@ try (Reader reader = new FileReader(&quot;text.txt&quot;, StandardCharsets.UTF_8
         System.out.print((char) c);
     }
 }</pre>
-<p>Reader.read() liefert 0 bis 65535 oder -1. Writer.write(int) schreibt nur die niedrigsten 16 Bits. Beide unterstützen Arrays mit Offset und Länge. ready() sagt, ob der nächste Lesevorgang nicht blockiert, nicht ob EOF erreicht ist.</p><h3>Zeilenweise mit Files</h3>
+<p>Reader.read() liefert 0 bis 65535 oder -1. Writer.write(int) schreibt nur die niedrigsten 16 Bits. Beide unterstützen Arrays mit Offset und Länge. ready() sagt, ob der nächste Lesevorgang nicht blockiert, nicht ob EOF erreicht ist.</p><h3>Weitere Reader- und Writer-Methoden</h3><p>Reader.skip(n) überspringt bis zu n UTF-16-Codeeinheiten und liefert die tatsächliche Anzahl. Reader.mark(readAheadLimit), reset() und markSupported() funktionieren analog zu den Byte-Streams, aber das Limit zählt char-Werte statt Bytes. BufferedReader unterstützt diese Methoden. ready() gibt an, ob der nächste Lesevorgang garantiert nicht blockiert; false bedeutet nicht zwingend Dateiende.</p><pre class="copyable">try (Reader reader = new BufferedReader(new StringReader(&quot;ABCDE&quot;))) {
+    System.out.println((char) reader.read()); // A
+    reader.mark(3);
+    System.out.println(reader.skip(2));       // 2 (B und C)
+    System.out.println((char) reader.read()); // D
+    reader.reset();
+    System.out.println((char) reader.read()); // B
+}</pre><p>Writer.write(String, off, len) schreibt einen Teil eines Strings. flush() gibt gepufferte Zeichen weiter; close() schließt den Writer. Bei Textdateien bestimmt das Charset, wie viele Bytes ein Zeichen tatsächlich benötigt.</p><h3>Zeilenweise mit Files</h3>
 <pre class="copyable">Path path = Path.of(&quot;text.txt&quot;);
 try (BufferedWriter writer = Files.newBufferedWriter(path)) {
     writer.write(&quot;Erste Zeile&quot;);
