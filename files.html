@@ -5,7 +5,7 @@
 <section class="intro" id="start"><h2>Was sind Path und Files?</h2><p>Mit <code>Path</code> und <code>Files</code> aus <code>java.nio.file</code> kannst du Dateien und Verzeichnisse unabhängig vom Betriebssystem bearbeiten. Ein Path beschreibt einen Pfad; Files führt Operationen im Dateisystem aus.</p>
 <pre class="copyable">Path path = Path.of(&quot;example.txt&quot;);
 System.out.println(Files.exists(path));</pre>
-<p>Das Erzeugen eines Path-Objekts legt noch keine Datei an. Die Beispiele verwenden Java 21.</p></section>
+<p>Das Erzeugen eines Path-Objekts legt noch keine Datei an.</p></section>
 <section class="card" id="grundlagen"><h2>File, Path und Files</h2>
 <p><code>java.io.File</code> ist die ältere API und nicht deprecated. <code>Path</code> ist ein Interface; <code>Paths</code> ist eine Hilfsklasse. Heute bevorzugen wir <code>Path.of()</code> und die statischen Methoden von <code>Files</code>. Diese bieten unter anderem detaillierte Exceptions, Dateiattribute und Unterstützung für symbolische Links.</p>
 <pre class="copyable">File file = new File(&quot;example.txt&quot;);
@@ -28,13 +28,13 @@ public class Main {
 <p>Relative Pfade beziehen sich auf das Arbeitsverzeichnis des Programms. Absolute Pfade beginnen an einer Wurzel. Unter Windows ist beispielsweise C:/ ein Laufwerkswurzelpfad. Verwende einzelne Pfadsegmente für portable Beispiele.</p>
 <pre class="copyable">Path path = Path.of(&quot;src&quot;, &quot;main&quot;, &quot;java&quot;, &quot;Main.java&quot;);
 Path same = Path.of(&quot;src/main/java&quot;).resolve(&quot;Main.java&quot;);
-System.out.println(path.toAbsolutePath());
-System.out.println(path.getRoot());      // null (relativ)
-System.out.println(path.getParent());    // src/main/java
-System.out.println(path.getFileName());  // Main.java
-System.out.println(path.getName(0));     // src
-System.out.println(path.getNameCount()); // 4
-System.out.println(path.subpath(1, 3));  // main/java
+System.out.println(path.toAbsolutePath()); // C:/.../src/main/java/Main.java
+System.out.println(path.getRoot());        // null (relativ)
+System.out.println(path.getParent());      // src/main/java
+System.out.println(path.getFileName());    // Main.java
+System.out.println(path.getName(0));       // src
+System.out.println(path.getNameCount());   // 4
+System.out.println(path.subpath(1, 3));    // main/java
 System.out.println(path.startsWith(&quot;src&quot;)); // true
 System.out.println(path.endsWith(&quot;Main.java&quot;)); // true</pre>
 <p>Die Ausgabe der Trennzeichen hängt vom Betriebssystem ab. <code>subpath</code> schließt den Endindex aus. <code>startsWith</code> und <code>endsWith</code> vergleichen vollständige Pfadsegmente.</p>
@@ -53,7 +53,7 @@ if (Files.exists(path)) {
     System.out.println(Files.isReadable(path));
     System.out.println(Files.isWritable(path));
     System.out.println(Files.isExecutable(path));
-    System.out.println(Files.getLastModifiedTime(path));
+    System.out.println(Files.getLastModifiedTime(path)); // z.B. 2026-11-12T09:30:00Z
     if (Files.isRegularFile(path)) {
         System.out.println(Files.size(path) + &quot; Bytes&quot;);
     }
@@ -72,7 +72,7 @@ System.out.println(Files.mismatch(a, b));
 System.out.println(Files.getOwner(a).getName());</pre>
 </section>
 <section class="card" id="operationen"><h2>Dateien und Verzeichnisse erstellen, kopieren, verschieben und löschen</h2>
-<p>Verwende für dieses Beispiel ein leeres Übungsverzeichnis. createDirectories erzeugt auch fehlende Elternverzeichnisse; createFile erzeugt eine leere Datei und schlägt fehl, wenn sie bereits existiert.</p>
+<p>createDirectory erzeugt nur das letzte Verzeichnis, createDirectories erzeugt auch fehlende Elternverzeichnisse; createFile erzeugt eine leere Datei und schlägt fehl, wenn sie bereits existiert.</p>
 <pre class="copyable">Path dir = Files.createDirectories(Path.of(&quot;demo&quot;));
 Path file = Files.createFile(dir.resolve(&quot;test.txt&quot;));
 Path copy = Files.copy(file, dir.resolve(&quot;copy.txt&quot;));
@@ -129,15 +129,13 @@ try (Stream&lt;Path&gt; paths = Files.walk(Path.of(&quot;.&quot;))) {
 <p>FileVisitor&lt;Path&gt; ermöglicht es, bei der rekursiven Suche auf einzelne Ereignisse zu reagieren. Die vier Methoden liefern FileVisitResult.</p><ul><li>preVisitDirectory: vor dem Betreten des Verzeichnisses</li><li>visitFile: beim Besuch einer Datei</li><li>visitFileFailed: wenn ein Eintrag nicht besucht werden kann</li><li>postVisitDirectory: nach der Verarbeitung des Verzeichnisses</li></ul><p>CONTINUE setzt die Suche fort, SKIP_SUBTREE überspringt bei preVisitDirectory den Inhalt, SKIP_SIBLINGS überspringt weitere Geschwister, TERMINATE beendet die Suche. SimpleFileVisitor bietet Standardimplementierungen; Fehler werden standardmäßig weitergeworfen.</p>
 <pre class="copyable">Files.walkFileTree(Path.of(&quot;.&quot;), new SimpleFileVisitor&lt;Path&gt;() {
     @Override
-    public FileVisitResult visitFile(Path file,
-            BasicFileAttributes attrs) {
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
         System.out.println(file);
         return FileVisitResult.CONTINUE;
     }
 });</pre>
 </section>
 <section class="card" id="uebungen"><h2>Übungen</h2>
-<p>Die folgenden vier Aufgaben stammen aus dem Übungsblatt. Verwende ein eigenes Übungsverzeichnis und passe die Pfade an. Die Lösungen sind mögliche Umsetzungen.</p>
 <article><h3>1. Einen Pfad erstellen und Dateieigenschaften ausgeben</h3><ul><li>Erstelle einen Pfad zu example.txt.</li><li>Prüfe, ob die Datei existiert.</li><li>Gib die Dateigröße aus, falls eine reguläre Datei existiert.</li><li>Prüfe, ob es sich um eine Datei oder ein Verzeichnis handelt.</li></ul><div class="task-actions"><button onclick="toggleSolution('files-hint-1')">Hinweis anzeigen</button><button onclick="toggleSolution('files-solution-1')">Lösung anzeigen</button></div><div class="solution" id="files-hint-1"><p>Verwende Path.of, Files.exists, Files.size, Files.isRegularFile und Files.isDirectory.</p></div><div class="solution" id="files-solution-1">
 <pre class="copyable">Path path = Path.of(&quot;example.txt&quot;);
 System.out.println(&quot;Existiert: &quot; + Files.exists(path));
