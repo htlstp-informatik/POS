@@ -1,37 +1,282 @@
-<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nebenläufigkeit – Threads</title><link rel="stylesheet" href="style.css"></head><body><header><h1>Nebenläufigkeit – Threads</h1></header><nav><a href="index.html">Start</a><a href="#grundlagen">Grundlagen</a><a href="#erzeugen">Threads erzeugen</a><a href="#zustand">Zustände und Methoden</a><a href="#interrupt">Unterbrechung und Daemon</a><a href="#uebungen">Übungen</a></nav><main><section class="intro"><h2>Einführung</h2><p>Mehrere Aufgaben können innerhalb eines Java-Programms nebenläufig ausgeführt werden. Wir lernen Threads zu starten, zu beobachten, zu koordinieren und sauber zu beenden.</p></section><section class="card" id="grundlagen"><h2>Grundlagen</h2><p>Ein Prozess ist ein laufendes Programm mit eigenen Ressourcen. Threads sind Ausführungsstränge innerhalb eines Prozesses: Sie teilen sich den Heap, besitzen aber eigene Aufrufstapel. Multitasking bedeutet, dass das Betriebssystem mehrere Aufgaben koordiniert; Multithreading bedeutet mehrere Threads in einem Prozess.</p><p><strong>Nebenläufigkeit</strong> bedeutet, dass Aufgaben überlappend vorankommen können, auch auf einem Kern durch Zeitscheiben. <strong>Parallelität</strong> bedeutet tatsächliche gleichzeitige Ausführung auf mehreren Kernen. Der Scheduler entscheidet, welcher Thread wann läuft. Erzeugung, Kontextwechsel und Koordination kosten Zeit; mehr Threads bedeuten nicht automatisch mehr Geschwindigkeit.</p><p>Platform Threads werden typischerweise auf Betriebssystem-Threads abgebildet. Java 21 bietet zusätzlich Virtual Threads, die von der JVM auf Platform Threads eingeplant werden und auch mehrere Kerne nutzen können. Sie sind besonders für viele wartende I/O-Aufgaben geeignet, nicht automatisch für CPU-intensive Berechnungen.</p></section><section class="card" id="erzeugen"><h2>Threads erzeugen</h2><h3>Thread erweitern oder Runnable implementieren</h3><p>Thread repräsentiert die Ausführung; Runnable beschreibt die Aufgabe (void run()). Runnable trennt Aufgabe und Ausführung und ist als funktionales Interface mit Lambda verwendbar.</p><pre class="copyable">class HelloThread extends Thread {
-    @Override public void run() {
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="utf-8"/>
+        <meta content="width=device-width, initial-scale=1" name="viewport"/>
+        <title>Nebenläufigkeit – Threads · POS</title>
+        <link href="style.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <header>
+            <h1>Nebenläufigkeit – Threads</h1>
+            <p>Java 21 · POS</p>
+        </header>
+        <nav>
+            <a href="index.html">Start</a>
+            <a href="#grundlagen">Grundlagen</a>
+            <a href="#erzeugen">Threads erzeugen</a>
+            <a href="#zustand">Zustände und Methoden</a>
+            <a href="#interrupt">Unterbrechung und Daemon</a>
+            <a href="#uebungen">Übungen</a>
+        </nav>
+        <main>
+            <section class="intro">
+                <h2>Einführung</h2>
+                <p>
+                    Mehrere Aufgaben können innerhalb eines Java-Programms nebenläufig ausgeführt werden. Wir
+                    lernen Threads zu starten, zu beobachten, zu koordinieren und sauber zu beenden.
+                </p>
+            </section>
+            <section class="card" id="grundlagen">
+                <h2>Grundlagen</h2>
+                <p>
+                    Ein Prozess ist ein laufendes Programm mit eigenen Ressourcen. Threads sind
+                    Ausführungsstränge innerhalb eines Prozesses: Sie teilen sich den Heap, besitzen aber
+                    eigene Aufrufstapel. Multitasking bedeutet, dass das Betriebssystem mehrere Aufgaben
+                    koordiniert; Multithreading bedeutet mehrere Threads in einem Prozess.
+                </p>
+                <p>
+                    <strong>Nebenläufigkeit</strong> bedeutet, dass Aufgaben überlappend vorankommen können,
+                    auch auf einem Kern durch Zeitscheiben. <strong>Parallelität</strong> bedeutet
+                    tatsächliche gleichzeitige Ausführung auf mehreren Kernen. Der Scheduler entscheidet,
+                    welcher Thread wann läuft. Erzeugung, Kontextwechsel und Koordination kosten Zeit; mehr
+                    Threads bedeuten nicht automatisch mehr Geschwindigkeit.
+                </p>
+                <h3>Platform Threads und Virtual Threads</h3>
+                <p>
+                    Ein Platform Thread ist in Java typischerweise einem eigenen Betriebssystem-Thread
+                    zugeordnet. Das Betriebssystem entscheidet, wann dieser Thread ausgeführt wird. Jeder
+                    Thread benötigt Ressourcen, beispielsweise Speicher für seinen Aufrufstapel.
+                </p>
+                <p>
+                    Virtual Threads sind leichtgewichtige Threads, die von der JVM verwaltet werden. Seit Java
+                    21 stehen sie als reguläres Feature zur Verfügung; in Java 19 und 20 waren sie bereits als
+                    Preview-Feature enthalten. Viele Virtual Threads können sich eine kleinere Anzahl von
+                    Platform Threads teilen. Die JVM plant sie auf diesen Platform Threads ein, sodass sie
+                    auch auf mehreren CPU-Kernen parallel ausgeführt werden können.
+                </p>
+                <p>
+                    <strong>Beispiel:</strong> Ein Webserver verarbeitet 10.000 Anfragen, die häufig auf eine
+                    Datenbankantwort warten. Bei vielen blockierenden I/O-Operationen kann die JVM einen
+                    wartenden Virtual Thread von seinem Platform Thread lösen. Dieser kann inzwischen eine
+                    andere Aufgabe ausführen. Sobald die Antwort verfügbar ist, kann der Virtual Thread seine
+                    Arbeit fortsetzen.
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Platform Thread</th>
+                            <th>Virtual Thread</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Typischerweise eigener Betriebssystem-Thread</td>
+                            <td>Teilt sich Platform Threads mit anderen Virtual Threads</td>
+                        </tr>
+                        <tr>
+                            <td>Höherer Ressourcenbedarf pro Thread</td>
+                            <td>Geringerer Ressourcenbedarf pro Thread</td>
+                        </tr>
+                        <tr>
+                            <td>Vom Betriebssystem eingeplant</td>
+                            <td>Von der JVM auf Platform Threads eingeplant</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>
+                    <strong>Wichtig:</strong> Virtual Threads machen CPU-intensive Berechnungen nicht
+                    automatisch schneller. Ihr Vorteil liegt vor allem bei vielen Aufgaben, die häufig auf I/O
+                    warten.
+                </p>
+                <h3>Virtual Thread starten</h3>
+                <pre class="copyable">Thread t = Thread.startVirtualThread(() -&gt; {
+    System.out.println("Hello World");
+});
+
+t.join(); // wartet auf das Ende des Virtual Threads</pre>
+                <p>
+                    startVirtualThread() erzeugt und startet den Thread sofort. Ein zusätzlicher Aufruf von
+                    start() ist nicht notwendig. join() wartet auf seine Beendigung.
+                </p>
+            </section>
+            <section class="card" id="erzeugen">
+                <h2>Threads erzeugen</h2>
+                <h3>Thread erweitern oder Runnable implementieren</h3>
+                <p>
+                    Thread repräsentiert die Ausführung; Runnable beschreibt die Aufgabe (void run()).
+                    Runnable trennt Aufgabe und Ausführung und ist als funktionales Interface mit Lambda
+                    verwendbar.
+                </p>
+                <pre class="copyable">class HelloThread extends Thread {
+    @Override
+    public void run() {
         System.out.println(Thread.currentThread().getName());
     }
 }
 // In main:
 Thread a = new HelloThread();
-a.setName(&quot;A&quot;);
+a.setName("A");
 a.start(); // A, Zeitpunkt nicht garantiert
-Runnable task = () -&gt; System.out.println(&quot;B&quot;);
-Thread b = new Thread(task, &quot;B&quot;);
-b.start();</pre><h3>start() versus run()</h3><pre class="copyable">Thread t = new Thread(() -&gt;
-    System.out.println(Thread.currentThread().getName()), &quot;Worker&quot;);
+Runnable task = () -&gt; System.out.println("B");
+Thread b = new Thread(task, "B");
+b.start();</pre>
+                <h3>start() versus run()</h3>
+                <pre class="copyable">Thread t = new Thread(() -&gt;
+    System.out.println(Thread.currentThread().getName()), "Worker");
 t.run();   // main: normaler Methodenaufruf
 t.start(); // Worker: neuer Ausführungsstrang
 t.join();  // main wartet auf Worker
-// t.start(); // IllegalThreadStateException</pre><p>start() start() startet einen neuen Thread, der die run()-Methode ausführt. Der aufrufende Thread (z. B. der Main-Thread) setzt seine Ausführung fort, ohne auf das Ende des neuen Threads zu warten. Ein Thread kann nur einmal gestartet werden. run() direkt aufzurufen startet keinen Thread. join() kann InterruptedException werfen; Beispiele in main können throws InterruptedException deklarieren.</p><h3>Ausgabereihenfolge</h3><pre class="copyable">System.out.println(&quot;Begin&quot;);
-Thread a = new Thread(() -&gt; System.out.println(&quot;A&quot;));
-Thread b = new Thread(() -&gt; System.out.println(&quot;B&quot;));
-a.start(); b.start();
-System.out.println(&quot;End&quot;);
-a.join(); b.join();
-System.out.println(&quot;Fertig&quot;);</pre><p>Begin steht zuerst, Fertig zuletzt. A, B und End können in unterschiedlicher Reihenfolge erscheinen. start() garantiert nicht, dass A vor B ausgeführt wird.</p></section><section class="card" id="zustand"><h2>Zustände und Methoden</h2><table><thead><tr><th>Thread.State</th><th>Bedeutung</th></tr></thead><tbody><tr><td>NEW</td><td>Erzeugt, noch nicht gestartet</td></tr><tr><td>RUNNABLE</td><td>Ausführbar oder gerade laufend; kein separater Java-Zustand RUNNING</td></tr><tr><td>BLOCKED</td><td>Wartet auf einen intrinsischen Monitor (synchronized)</td></tr><tr><td>WAITING</td><td>Wartet ohne Zeitlimit, z. B. join(), wait(), park()</td></tr><tr><td>TIMED_WAITING</td><td>Wartet mit Zeitlimit, z. B. sleep(), join(1000)</td></tr><tr><td>TERMINATED</td><td>run() beendet, normal oder durch unbehandelte Ausnahme</td></tr></tbody></table><p>getState() liefert nur eine Momentaufnahme. isAlive() ist nach start() bis zur Beendigung true. ReentrantLock-Warten ist nicht zwingend BLOCKED; typischerweise WAITING/TIMED_WAITING.</p><table><thead><tr><th>Methode</th><th>Erklärung</th></tr></thead><tbody><tr><td>currentThread()</td><td>Statisch: Referenz auf den gerade ausführenden Thread</td></tr><tr><td>getName()/setName(String)</td><td>Name lesen/setzen; dient der Diagnose, nicht der Identität</td></tr><tr><td>threadId()</td><td>Eindeutige ID während der Lebensdauer; Java 21 bevorzugt gegenüber deprecated getId()</td></tr><tr><td>getPriority()/setPriority(int)</td><td>Platform Thread: 1 bis 10; keine garantierte Ausführungsreihenfolge</td></tr><tr><td>yield()</td><td>Unverbindlicher Hinweis an Scheduler; keine Wartegarantie</td></tr><tr><td>sleep(long millis)</td><td>Statisch: aktueller Thread wartet ungefähr millis Millisekunden; gibt keine Monitore frei</td></tr><tr><td>join()/join(long millis)</td><td>Aufrufer wartet auf Zielthread; Timeout kehrt normal zurück</td></tr><tr><td>isDaemon()/setDaemon(boolean)</td><td>Daemon-Status abfragen/setzen; bei Platform Threads vor start() setzen</td></tr></tbody></table><h3>join mit Timeout</h3><pre class="copyable">Thread t = new Thread(() -&gt; {
-    try { Thread.sleep(500); }
-    catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+// t.start(); // IllegalThreadStateException</pre>
+                <p>
+                    <strong>start()</strong> startet einen neuen Thread, der die run()-Methode ausführt. Der
+                    aufrufende Thread (z. B. der Main-Thread) setzt seine Ausführung fort, ohne auf das Ende
+                    des neuen Threads zu warten.
+                </p>
+                <p>
+                    <strong>run()</strong> führt bei einem direkten Aufruf die Methode im aktuellen Thread
+                    aus. Erst wenn die Methode beendet ist, wird der nächste Befehl ausgeführt. Es entsteht
+                    kein neuer Thread.
+                </p>
+                <p>
+                    Ein Thread kann nur einmal mit start() gestartet werden. join() kann InterruptedException
+                    werfen; die main-Methode kann throws InterruptedException deklarieren.
+                </p>
+                <h3>Ausgabereihenfolge</h3>
+                <pre class="copyable">System.out.println("Begin");
+Thread a = new Thread(() -&gt; System.out.println("A"));
+Thread b = new Thread(() -&gt; System.out.println("B"));
+a.start();
+b.start();
+System.out.println("End");
+a.join();
+b.join();
+System.out.println("Fertig");</pre>
+                <p>
+                    Begin steht zuerst, Fertig zuletzt. A, B und End können in unterschiedlicher Reihenfolge
+                    erscheinen. start() garantiert nicht, dass A vor B ausgeführt wird.
+                </p>
+            </section>
+            <section class="card" id="zustand">
+                <h2>Zustände und Methoden</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Thread.State</th>
+                            <th>Bedeutung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>NEW</td>
+                            <td>Erzeugt, noch nicht gestartet</td>
+                        </tr>
+                        <tr>
+                            <td>RUNNABLE</td>
+                            <td>Ausführbar oder gerade laufend; kein separater Java-Zustand RUNNING</td>
+                        </tr>
+                        <tr>
+                            <td>BLOCKED</td>
+                            <td>Wartet auf einen intrinsischen Monitor (synchronized)</td>
+                        </tr>
+                        <tr>
+                            <td>WAITING</td>
+                            <td>Wartet ohne Zeitlimit, z. B. join(), wait(), park()</td>
+                        </tr>
+                        <tr>
+                            <td>TIMED_WAITING</td>
+                            <td>Wartet mit Zeitlimit, z. B. sleep(), join(1000)</td>
+                        </tr>
+                        <tr>
+                            <td>TERMINATED</td>
+                            <td>run() beendet, normal oder durch unbehandelte Ausnahme</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>
+                    getState() liefert nur eine Momentaufnahme. isAlive() ist nach start() bis zur Beendigung
+                    true. ReentrantLock-Warten ist nicht zwingend BLOCKED; typischerweise
+                    WAITING/TIMED_WAITING.
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Methode</th>
+                            <th>Erklärung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>currentThread()</td>
+                            <td>Statisch: Referenz auf den gerade ausführenden Thread</td>
+                        </tr>
+                        <tr>
+                            <td>getName()/setName(String)</td>
+                            <td>Name lesen/setzen; dient der Diagnose, nicht der Identität</td>
+                        </tr>
+                        <tr>
+                            <td>threadId()</td>
+                            <td>
+                                Eindeutige ID während der Lebensdauer; Java 21 bevorzugt gegenüber deprecated
+                                getId()
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>getPriority()/setPriority(int)</td>
+                            <td>Platform Thread: 1 bis 10; keine garantierte Ausführungsreihenfolge</td>
+                        </tr>
+                        <tr>
+                            <td>yield()</td>
+                            <td>Unverbindlicher Hinweis an Scheduler; keine Wartegarantie</td>
+                        </tr>
+                        <tr>
+                            <td>sleep(long millis)</td>
+                            <td>
+                                Statisch: aktueller Thread wartet ungefähr millis Millisekunden; gibt keine
+                                Monitore frei
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>join()/join(long millis)</td>
+                            <td>Aufrufer wartet auf Zielthread; Timeout kehrt normal zurück</td>
+                        </tr>
+                        <tr>
+                            <td>isDaemon()/setDaemon(boolean)</td>
+                            <td>Daemon-Status abfragen/setzen; bei Platform Threads vor start() setzen</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h3>join mit Timeout</h3>
+                <pre class="copyable">Thread t = new Thread(() -&gt; {
+    try {
+        Thread.sleep(500);
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
 });
 t.start();
 t.join(100);
 System.out.println(t.isAlive()); // meist true, nicht garantiert
 t.join();
-System.out.println(t.isAlive()); // false</pre><p>join(100) wirft nicht wegen Zeitablaufs. InterruptedException entsteht, wenn der wartende Thread unterbrochen wird. Nach erfolgreichem join() sind die Aktionen des beendeten Threads für den Aufrufer sichtbar (happens-before).</p></section><section class="card" id="interrupt"><h2>Unterbrechung und Daemon</h2><p>interrupt() ist eine kooperative Aufforderung, keine Zwangsbeendigung. Bei sleep, wait und join wird gewöhnlich InterruptedException ausgelöst und das Interrupt-Flag gelöscht. Bei normaler Berechnung wird das Flag gesetzt; der Code muss reagieren. Warten auf synchronized ist nicht interruptibel.</p><pre class="copyable">Thread worker = new Thread(() -&gt; {
+System.out.println(t.isAlive()); // false</pre>
+                <p>
+                    join(100) wirft nicht wegen Zeitablaufs. InterruptedException entsteht, wenn der wartende
+                    Thread unterbrochen wird. Nach erfolgreichem join() sind die Aktionen des beendeten
+                    Threads für den Aufrufer sichtbar (happens-before).
+                </p>
+            </section>
+            <section class="card" id="interrupt">
+                <h2>Unterbrechung und Daemon</h2>
+                <p>
+                    interrupt() ist eine kooperative Aufforderung, keine Zwangsbeendigung. Bei sleep, wait und
+                    join wird gewöhnlich InterruptedException ausgelöst und das Interrupt-Flag gelöscht. Bei
+                    normaler Berechnung wird das Flag gesetzt; der Code muss reagieren. Warten auf
+                    synchronized ist nicht interruptibel.
+                </p>
+                <pre class="copyable">Thread worker = new Thread(() -&gt; {
     try {
         while (!Thread.currentThread().isInterrupted()) {
-            System.out.println(&quot;Arbeite&quot;);
+            System.out.println("Arbeite");
             Thread.sleep(100);
         }
     } catch (InterruptedException e) {
@@ -42,30 +287,296 @@ worker.start();
 Thread.sleep(250);
 worker.interrupt();
 worker.join();
-System.out.println(&quot;Beendet&quot;);</pre><p>isInterrupted() prüft das Flag des betreffenden Threads ohne es zu löschen. Thread.interrupted() prüft das Flag des aktuellen Threads und löscht es. Ein catch sollte die Unterbrechung nicht unbemerkt verschlucken; weiterwerfen, beenden oder Flag wieder setzen.</p><p>Daemon Threads verhindern das JVM-Ende nicht. Sie haben nicht automatisch niedrige Priorität. Platform Threads erben normalerweise den Daemon-Status ihres Erzeugers; Virtual Threads sind immer Daemons. Die JVM wartet nicht darauf, dass Daemons ihre Arbeit oder finally-Blöcke beenden.</p><pre class="copyable">Thread t = new Thread(() -&gt; System.out.println(&quot;Hintergrund&quot;));
+System.out.println("Beendet");</pre>
+                <p>
+                    isInterrupted() prüft das Flag des betreffenden Threads ohne es zu löschen.
+                    Thread.interrupted() prüft das Flag des aktuellen Threads und löscht es. Ein catch sollte
+                    die Unterbrechung nicht unbemerkt verschlucken; weiterwerfen, beenden oder Flag wieder
+                    setzen.
+                </p>
+                <p>
+                    Daemon Threads verhindern das JVM-Ende nicht. Sie haben nicht automatisch niedrige
+                    Priorität. Platform Threads erben normalerweise den Daemon-Status ihres Erzeugers; Virtual
+                    Threads sind immer Daemons. Die JVM wartet nicht darauf, dass Daemons ihre Arbeit oder
+                    finally-Blöcke beenden.
+                </p>
+                <pre class="copyable">Thread t = new Thread(() -&gt; System.out.println("Hintergrund"));
 t.setDaemon(true);
 t.start();
 // Ohne join ist die Ausgabe nicht garantiert.
-t.join(); // jetzt wird auf die Beendigung gewartet</pre></section><section class="card" id="uebungen"><h2>Übungen</h2><article><h3>1. Zwei Teilberechnungen</h3><p>Berechne die Summen 1 bis 100 und 101 bis 200 in zwei Threads. Gib erst danach die Gesamtsumme aus.</p><div class="task-actions"><button onclick="toggleSolution('hint-1')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-1')">Lösung anzeigen</button></div><div class="solution" id="hint-1"><p>Jeder Thread schreibt in ein eigenes Arrayelement. Warte mit join auf beide.</p></div><div class="solution" id="solution-1"><pre class="copyable">public class Main {
+t.join(); // jetzt wird auf die Beendigung gewartet</pre>
+            </section>
+            <section class="card" id="uebungen">
+                <h2>Übungen</h2>
+                <article>
+                    <h3>1. Zwei Teilberechnungen</h3>
+                    <p>
+                        Berechne die Summen 1 bis 100 und 101 bis 200 in zwei Threads. Gib erst danach die
+                        Gesamtsumme aus.
+                    </p>
+                    <div class="task-actions">
+                        <button onclick="toggleSolution('hint-1')">Hinweis anzeigen</button>
+                        <button onclick="toggleSolution('solution-1')">Lösung anzeigen</button>
+                    </div>
+                    <div class="solution" id="hint-1">
+                        <p>Jeder Thread schreibt in ein eigenes Arrayelement. Warte mit join auf beide.</p>
+                    </div>
+                    <div class="solution" id="solution-1">
+                        <pre class="copyable">public class Main {
     public static void main(String[] args) throws InterruptedException {
         int[] sums = new int[2];
-        Thread a = new Thread(() -&gt; { for(int i=1;i&lt;=100;i++) sums[0]+=i; });
-        Thread b = new Thread(() -&gt; { for(int i=101;i&lt;=200;i++) sums[1]+=i; });
-        a.start(); b.start(); a.join(); b.join();
-        System.out.println(sums[0]+sums[1]); // 20100
+
+        Thread a = new Thread(() -&gt; {
+            for (int i = 1; i &lt;= 100; i++) {
+                sums[0] += i;
+            }
+        });
+
+        Thread b = new Thread(() -&gt; {
+            for (int i = 101; i &lt;= 200; i++) {
+                sums[1] += i;
+            }
+        });
+
+        // Beide Threads starten
+        a.start();
+        b.start();
+
+        // Auf beide Threads warten
+        a.join();
+        b.join();
+
+        System.out.println(sums[0] + sums[1]); // 20100
     }
-}</pre></div></article><article><h3>2. Lager ohne Synchronisation</h3><p>Ein Produzent liefert, ein Konsument verkauft. Beide verwenden dieselbe Lagerinstanz mit Bestand 100 und maximal 15 Transaktionen. Beobachte mehrmals die Ausgaben und erkläre mögliche Fehler.</p><div class="task-actions"><button onclick="toggleSolution('hint-2')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-2')">Lösung anzeigen</button></div><div class="solution" id="hint-2"><p>bestand += anzahl und transaktionen++ bestehen aus mehreren Schritten. istOffen und die nachfolgende Aktion sind nicht gemeinsam atomar.</p></div><div class="solution" id="solution-2"><pre class="copyable">public class Main {
+}</pre>
+                        <h4>Warum funktioniert das ohne synchronized?</h4>
+                        <p>
+                            <strong>1. Unterschiedliche Speicherstellen:</strong> Thread a verändert
+                            ausschließlich sums[0], Thread b ausschließlich sums[1]. Obwohl beide dasselbe
+                            Array verwenden, schreiben sie nicht auf dasselbe Array-Element. Daher können sie
+                            die Änderungen des jeweils anderen Threads nicht überschreiben (keine Lost
+                            Updates).
+                        </p>
+                        <p>
+                            <strong>2. Warten auf die Berechnungen:</strong> a.join() und b.join() sorgen
+                            dafür, dass der Main-Thread erst nach Beendigung beider Threads die Gesamtsumme
+                            berechnet. Beide Threads wurden vorher gestartet und können nebenläufig arbeiten.
+                        </p>
+                        <p>
+                            <strong>3. Sichtbarkeit:</strong> Nach erfolgreichem join() sind die Änderungen
+                            des beendeten Threads für den Main-Thread sichtbar (Happens-before-Beziehung).
+                            Damit liest main die vollständig berechneten Werte.
+                        </p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Thread</th>
+                                    <th>Berechnung</th>
+                                    <th>Ergebnis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>a</td>
+                                    <td>1 + ... + 100</td>
+                                    <td>5050</td>
+                                </tr>
+                                <tr>
+                                    <td>b</td>
+                                    <td>101 + ... + 200</td>
+                                    <td>15050</td>
+                                </tr>
+                                <tr>
+                                    <td>main</td>
+                                    <td>5050 + 15050</td>
+                                    <td>20100</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h4>Was passiert ohne join()?</h4>
+                        <pre class="copyable">a.start();
+b.start();
+
+System.out.println(sums[0] + sums[1]); // Ergebnis nicht garantiert</pre>
+                        <p>
+                            Der Main-Thread könnte die Summe ausgeben, bevor die beiden Threads fertig sind.
+                            Würden beide Threads hingegen dasselbe Array-Element mit += verändern, könnten
+                            Lost Updates auftreten, selbst mit join().
+                        </p>
+                        <p>
+                            <strong>Merke:</strong> Nicht jeder Zugriff mehrerer Threads auf dasselbe Objekt
+                            erfordert synchronized. Hier sind die getrennten Speicherstellen und join()
+                            ausreichend.
+                        </p>
+                    </div>
+                </article>
+                <article>
+                    <h3>2. Lager ohne Synchronisation</h3>
+                    <p>
+                        Ein Produzent liefert, ein Konsument verkauft. Beide verwenden dieselbe Lagerinstanz
+                        mit Bestand 100 und maximal 15 Transaktionen. Beobachte mehrmals die Ausgaben und
+                        erkläre mögliche Fehler.
+                    </p>
+                    <div class="task-actions">
+                        <button onclick="toggleSolution('hint-2')">Hinweis anzeigen</button>
+                        <button onclick="toggleSolution('solution-2')">Lösung anzeigen</button>
+                    </div>
+                    <div class="solution" id="hint-2">
+                        <p>
+                            bestand += anzahl und transaktionen++ bestehen aus mehreren Schritten. istOffen
+                            und die nachfolgende Aktion sind nicht gemeinsam atomar.
+                        </p>
+                    </div>
+                    <div class="solution" id="solution-2">
+                        <pre class="copyable">public class Main {
     static class Lager {
-        int bestand = 100, transaktionen = 0;
-        boolean istOffen() { return transaktionen &lt; 15; }
-        void liefere(int n) { bestand += n; transaktionen++; System.out.println(&quot;Lieferung: &quot; + bestand); }
-        void verkaufe(int n) { bestand -= n; transaktionen++; System.out.println(&quot;Verkauf: &quot; + bestand); }
+        int bestand = 100;
+        int transaktionen = 0;
+
+        boolean istOffen() {
+            return transaktionen &lt; 15;
+        }
+
+        void liefere(int anzahl) {
+            bestand += anzahl;
+            transaktionen++;
+            System.out.println("Lieferung: " + bestand);
+        }
+
+        void verkaufe(int anzahl) {
+            bestand -= anzahl;
+            transaktionen++;
+            System.out.println("Verkauf: " + bestand);
+        }
     }
+
     public static void main(String[] args) throws InterruptedException {
-        Lager l = new Lager();
-        Thread p = new Thread(() -&gt; { for(int i=0;i&lt;15 &amp;&amp; l.istOffen();i++) l.liefere(10); });
-        Thread k = new Thread(() -&gt; { for(int i=0;i&lt;15 &amp;&amp; l.istOffen();i++) l.verkaufe(10); });
-        p.start(); k.start(); p.join(); k.join();
-        System.out.println(l.bestand + &quot; / &quot; + l.transaktionen); // variabel
+        Lager lager = new Lager();
+
+        Thread produzent = new Thread(() -&gt; {
+            for (int i = 0; i &lt; 15 &amp;&amp; lager.istOffen(); i++) {
+                lager.liefere(10);
+            }
+        });
+
+        Thread konsument = new Thread(() -&gt; {
+            for (int i = 0; i &lt; 15 &amp;&amp; lager.istOffen(); i++) {
+                lager.verkaufe(10);
+            }
+        });
+
+        produzent.start();
+        konsument.start();
+
+        produzent.join();
+        konsument.join();
+
+        System.out.println("Bestand: " + lager.bestand);
+        System.out.println("Transaktionen: " + lager.transaktionen);
     }
-}</pre><p>Absichtlich fehlerhaft: Lost Updates, negative Bestände, inkonsistente Ausgaben und mehr als 15 Transaktionen sind möglich. Die begrenzten Schleifen verhindern hier eine Endlosschleife.</p></div></article></section></main><script src="script.js"></script></body></html>
+}</pre>
+                        <h4>Warum ist dieses Programm fehlerhaft?</h4>
+                        <p>
+                            Produzent und Konsument greifen auf dieselben Attribute bestand und transaktionen
+                            zu. Die Zugriffe sind nicht synchronisiert. Folgende Fehler können auftreten:
+                        </p>
+                        <h4>1. Lost Updates (verlorene Änderungen)</h4>
+                        <p>
+                            bestand += 10 und bestand -= 10 bestehen jeweils aus Lesen, Berechnen und
+                            Speichern. Diese Schritte können sich überschneiden. Beispiel bei einem
+                            Anfangsbestand von 100:
+                        </p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Schritt</th>
+                                    <th>Produzent</th>
+                                    <th>Konsument</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Liest 100</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td></td>
+                                    <td>Liest 100</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Berechnet 110</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>4</td>
+                                    <td></td>
+                                    <td>Berechnet 90</td>
+                                </tr>
+                                <tr>
+                                    <td>5</td>
+                                    <td>Speichert 110</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>6</td>
+                                    <td></td>
+                                    <td>Speichert 90</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p>
+                            Der Endbestand beträgt 90 statt 100. Die Lieferung wurde überschrieben. Dasselbe
+                            Problem kann bei transaktionen++ auftreten: Zwei Transaktionen werden
+                            durchgeführt, aber der Zähler steigt nur um eins.
+                        </p>
+                        <h4>2. Negative Bestände</h4>
+                        <p>
+                            Die Methode verkaufe() prüft nicht, ob genügend Ware vorhanden ist. Wenn der
+                            Konsument beispielsweise elfmal verkauft, bevor der Produzent liefert, sinkt der
+                            Bestand von 100 auf -10. Dieser Fehler kann auch ohne Nebenläufigkeit auftreten.
+                            Eine korrekte Lösung muss den Bestand vor dem Verkauf prüfen und Prüfung und
+                            Änderung gemeinsam schützen.
+                        </p>
+                        <h4>3. Inkonsistente Ausgaben</h4>
+                        <p>
+                            Der Produzent erhöht den Bestand von 100 auf 110. Bevor er die Ausgabe ausführt,
+                            verkauft der Konsument 10 Stück. Der Produzent kann nun „Lieferung: 100“ ausgeben,
+                            obwohl seine Lieferung den Bestand auf 110 erhöht hatte. Die Ausgabe passt dann
+                            nicht mehr zum eigenen Vorgang.
+                        </p>
+                        <h4>4. Mehr als 15 Transaktionen</h4>
+                        <p>
+                            Bei 14 Transaktionen können beide Threads istOffen() aufrufen und true erhalten.
+                            Anschließend führen beide ihre Aktion durch. Damit finden 16 Transaktionen statt,
+                            obwohl nur 15 erlaubt sind. Der gespeicherte Zähler kann wegen Lost Updates sogar
+                            weniger anzeigen.
+                        </p>
+                        <p>
+                            Die Prüfung istOffen() und die anschließende Transaktion müssen gemeinsam
+                            geschützt werden. Einzelne synchronisierte Methoden reichen dafür nicht aus, wenn
+                            die Prüfung weiterhin getrennt von der Aktion erfolgt.
+                        </p>
+                        <h4>5. Warum sind die Schleifen begrenzt?</h4>
+                        <p>
+                            Die Bedingung i &lt; 15 begrenzt jeden Thread auf höchstens 15 Durchläufe, also
+                            insgesamt höchstens 30 Aktionen. Ohne diese zusätzliche Grenze wäre bei fehlender
+                            Synchronisation nicht garantiert, dass ein Thread die Änderungen am
+                            Transaktionszähler rechtzeitig erkennt. Die Grenze verhindert hier eine
+                            unbegrenzte Schleife, behebt aber keinen der genannten Fehler.
+                        </p>
+                        <p>
+                            <strong>Fazit:</strong> join() wartet auf beide Threads und macht ihre Ergebnisse
+                            sichtbar. Es verhindert aber keine konkurrierenden Zugriffe während der
+                            Ausführung. Eine korrekte Lagerlösung muss Bestandsprüfung, Transaktionslimit und
+                            Änderungen gemeinsam synchronisieren.
+                        </p>
+                    </div>
+                </article>
+            </section>
+        </main>
+        <script src="script.js"></script>
+    </body>
+</html>
