@@ -1,17 +1,320 @@
-<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Thread-Synchronisation · POS</title><link rel="stylesheet" href="style.css"></head><body><header><h1>Thread-Synchronisation</h1></header><nav><a href="index.html">Start</a><a href="#fehler">Race Conditions und Fehlerquellen</a><a href="#monitor">Monitor und synchronized</a><a href="#wait">wait, notify und notifyAll</a><a href="#locks">ReentrantLock und Condition</a><a href="#queue">Producer/Consumer</a><a href="#werkzeuge">Semaphore, Latch und Barrier</a><a href="#executor">ExecutorService, Callable und Future</a><a href="#atomic">volatile und AtomicInteger</a><a href="#uebungen">Übungen und Monitor-Aufgaben</a></nav><main><section class="intro"><h2>Einführung</h2><p>Aufbauend auf Threads koordinieren wir gemeinsame Daten und Wartebedingungen. Codeausschnitte benötigen die passenden Imports (java.util.concurrent.*, java.util.concurrent.locks.*, java.util.concurrent.atomic.*) und gegebenenfalls throws InterruptedException in main.</p></section><section class="card" id="fehler"><h2>Race Conditions und Fehlerquellen</h2><p>Gemeinsame veränderbare Daten benötigen eine konsistente Synchronisationsstrategie. Ein Lost Update entsteht beispielsweise bei bestand += 10: Lesen, Berechnen, Schreiben sind zusammen nicht atomar.</p><table><thead><tr><th>Schritt</th><th>Lieferant</th><th>Kunde</th></tr></thead><tbody><tr><td>1</td><td>liest 100</td><td>liest 100</td></tr><tr><td>2</td><td>berechnet 110</td><td>berechnet 90</td></tr><tr><td>3</td><td>schreibt 110</td><td>schreibt 90</td></tr></tbody></table><p>Ergebnis 90 statt 100. Auch ein einzelner Schreiber und mehrere Leser können ohne Sichtbarkeitsgarantie inkonsistente Daten beobachten. Das Beispiel ist eine mögliche logische Reihenfolge, keine garantierte Beschreibung von CPU-Registern.</p><table><thead><tr><th>Problem</th><th>Bedeutung</th></tr></thead><tbody><tr><td>Race Condition</td><td>Ergebnis hängt von der zeitlichen Reihenfolge ab</td></tr><tr><td>Data Race</td><td>Konfligierende Speicherzugriffe ohne happens-before, mindestens einer schreibt</td></tr><tr><td>Deadlock</td><td>Threads warten zyklisch aufeinander</td></tr><tr><td>Livelock</td><td>Threads reagieren aktiv aufeinander, ohne Fortschritt</td></tr><tr><td>Starvation</td><td>Thread erhält dauerhaft nicht benötigte Ressourcen oder Ausführungsgelegenheiten</td></tr><tr><td>Spurious Wakeup</td><td>Warten endet ohne passendes Signal; Bedingung erneut prüfen</td></tr></tbody></table><h3>Deadlock vermeiden</h3><p>Wenn A zuerst Lock 1 und B zuerst Lock 2 hält und beide den jeweils anderen benötigen, kann ein Deadlock entstehen. Einheitliche Lock-Reihenfolge verhindert diesen Zyklus. Private Locks helfen bei der Kapselung, verhindern aber nicht automatisch Deadlocks.</p></section><section class="card" id="monitor"><h2>Monitor und synchronized</h2><p>Jedes Java-Objekt besitzt einen intrinsischen Monitor. synchronized erwirbt diesen Monitor vor dem geschützten Bereich und gibt ihn beim Verlassen automatisch frei, auch bei Exceptions. Nur ein Thread kann ihn gleichzeitig halten; derselbe Thread darf ihn mehrfach erwerben (reentrant). Nicht synchronisierte Methoden werden dadurch nicht automatisch gesperrt.</p><pre class="copyable">class Counter {
+<!DOCTYPE html>
+<html lang="de">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   Thread-Synchronisation · POS
+  </title>
+  <link href="style.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <header>
+   <h1>
+    Thread-Synchronisation
+   </h1>
+   <p>
+    Java 21 · POS
+   </p>
+  </header>
+  <nav>
+   <a href="index.html">
+    Start
+   </a>
+   <a href="#fehler">
+    Race Conditions und Fehlerquellen
+   </a>
+   <a href="#monitor">
+    Monitor und synchronized
+   </a>
+   <a href="#wait">
+    wait, notify und notifyAll
+   </a>
+   <a href="#locks">
+    ReentrantLock und Condition
+   </a>
+   <a href="#queue">
+    Producer/Consumer
+   </a>
+   <a href="#werkzeuge">
+    Semaphore, Latch und Barrier
+   </a>
+   <a href="#executor">
+    ExecutorService, Callable und Future
+   </a>
+   <a href="#atomic">
+    volatile und AtomicInteger
+   </a>
+   <a href="#uebungen">
+    Übungen und Monitor-Aufgaben
+   </a>
+  </nav>
+  <main>
+   <section class="intro">
+    <h2>
+     Einführung
+    </h2>
+    <p>
+     Aufbauend auf Threads koordinieren wir gemeinsame Daten und Wartebedingungen. Beispiele verwenden Java
+     21; Codeausschnitte benötigen die passenden Imports (java.util.concurrent.*,
+     java.util.concurrent.locks.*, java.util.concurrent.atomic.*) und gegebenenfalls throws
+     InterruptedException in main.
+    </p>
+   </section>
+   <section class="card" id="fehler">
+    <h2>
+     Race Conditions und Fehlerquellen
+    </h2>
+    <p>
+     Gemeinsame veränderbare Daten benötigen eine konsistente Synchronisationsstrategie. Ein Lost Update
+     entsteht beispielsweise bei bestand += 10: Lesen, Berechnen, Schreiben sind zusammen nicht atomar.
+    </p>
+    <table>
+     <thead>
+      <tr>
+       <th>
+        Schritt
+       </th>
+       <th>
+        Lieferant
+       </th>
+       <th>
+        Kunde
+       </th>
+      </tr>
+     </thead>
+     <tbody>
+      <tr>
+       <td>
+        1
+       </td>
+       <td>
+        liest 100
+       </td>
+       <td>
+        liest 100
+       </td>
+      </tr>
+      <tr>
+       <td>
+        2
+       </td>
+       <td>
+        berechnet 110
+       </td>
+       <td>
+        berechnet 90
+       </td>
+      </tr>
+      <tr>
+       <td>
+        3
+       </td>
+       <td>
+        schreibt 110
+       </td>
+       <td>
+        schreibt 90
+       </td>
+      </tr>
+     </tbody>
+    </table>
+    <p>
+     Ergebnis 90 statt 100. Auch ein einzelner Schreiber und mehrere Leser können ohne Sichtbarkeitsgarantie
+     inkonsistente Daten beobachten. Das Beispiel ist eine mögliche logische Reihenfolge, keine garantierte
+     Beschreibung von CPU-Registern.
+    </p>
+    <table>
+     <thead>
+      <tr>
+       <th>
+        Problem
+       </th>
+       <th>
+        Bedeutung
+       </th>
+      </tr>
+     </thead>
+     <tbody>
+      <tr>
+       <td>
+        Race Condition
+       </td>
+       <td>
+        Ergebnis hängt von der zeitlichen Reihenfolge ab
+       </td>
+      </tr>
+      <tr>
+       <td>
+        Data Race
+       </td>
+       <td>
+        Konfligierende Speicherzugriffe ohne happens-before, mindestens einer schreibt
+       </td>
+      </tr>
+      <tr>
+       <td>
+        Deadlock
+       </td>
+       <td>
+        Threads warten zyklisch aufeinander
+       </td>
+      </tr>
+      <tr>
+       <td>
+        Livelock
+       </td>
+       <td>
+        Threads reagieren aktiv aufeinander, ohne Fortschritt
+       </td>
+      </tr>
+      <tr>
+       <td>
+        Starvation
+       </td>
+       <td>
+        Thread erhält dauerhaft nicht benötigte Ressourcen oder Ausführungsgelegenheiten
+       </td>
+      </tr>
+      <tr>
+       <td>
+        Spurious Wakeup
+       </td>
+       <td>
+        Warten endet ohne passendes Signal; Bedingung erneut prüfen
+       </td>
+      </tr>
+     </tbody>
+    </table>
+    <h3>
+     Deadlock vermeiden
+    </h3>
+    <p>
+     Wenn A zuerst Lock 1 und B zuerst Lock 2 hält und beide den jeweils anderen benötigen, kann ein Deadlock
+     entstehen. Einheitliche Lock-Reihenfolge verhindert diesen Zyklus. Private Locks helfen bei der
+     Kapselung, verhindern aber nicht automatisch Deadlocks.
+    </p>
+   </section>
+   <section class="card" id="monitor">
+    <h2>
+     Monitor und synchronized
+    </h2>
+    <p>
+     Jedes Java-Objekt besitzt einen intrinsischen Monitor. synchronized erwirbt diesen Monitor vor dem
+     geschützten Bereich und gibt ihn beim Verlassen automatisch frei, auch bei Exceptions. Nur ein Thread
+     kann ihn gleichzeitig halten; derselbe Thread darf ihn mehrfach erwerben (reentrant). Nicht
+     synchronisierte Methoden werden dadurch nicht automatisch gesperrt.
+    </p>
+    <pre class="copyable">class Counter {
     private int count;
-    public synchronized void increment() { count++; }
-    public synchronized int get() { return count; }
-}</pre><p>Beide Methoden sperren this. Zwei verschiedene Counter-Objekte haben unterschiedliche Monitore. Ein Monitor-Unlock happens-before einem späteren Lock desselben Monitors; so werden Änderungen sichtbar.</p><pre class="copyable">class Counter {
+    public synchronized void increment() {
+        count++;
+    }
+    public synchronized int get() {
+        return count;
+    }
+}</pre>
+    <p>
+     Beide Methoden sperren this. Zwei verschiedene Counter-Objekte haben unterschiedliche Monitore. Gibt ein
+     Thread den Monitor frei, sind seine vorherigen Änderungen für einen anderen Thread sichtbar, der
+     anschließend denselben Monitor erwirbt. Beispiel: Thread A erhöht count auf 1 und verlässt increment().
+     Ruft Thread B danach get() auf, liest er 1 (sofern kein weiterer Thread den Wert geändert hat).
+     synchronized legt jedoch nicht fest, welcher Thread zuerst den Monitor erwirbt.
+    </p>
+    <pre class="copyable">class Counter {
     private int count;
     private final Object lock = new Object();
-    public void increment() { synchronized (lock) { count++; } }
-    public int get() { synchronized (lock) { return count; } }
-}</pre><p>private verhindert fremde Zugriffe auf das Lock-Objekt, final verhindert den Austausch der Referenz. Alle Zugriffe auf count müssen dieselbe Strategie verwenden. Eine static synchronized Methode sperrt Counter.class, nicht this. Ein Konstruktor darf nicht synchronized deklariert werden; ein Block darin ist möglich. this.getClass() kann bei Unterklassen ein anderes Class-Objekt liefern als Counter.class.</p><pre class="copyable">class GlobalCounter {
+    public void increment() { synchronized (lock) {
+        count++;
+    } }
+    public int get() { synchronized (lock) {
+        return count;
+    } }
+}</pre>
+    <p>
+     private verhindert fremde Zugriffe auf das Lock-Objekt, final verhindert den Austausch der Referenz. Alle
+     Zugriffe auf count müssen dieselbe Strategie verwenden. Eine static synchronized Methode sperrt
+     Counter.class, nicht this. Ein Konstruktor darf nicht synchronized deklariert werden; ein Block darin ist
+     möglich. this.getClass() kann bei Unterklassen ein anderes Class-Objekt liefern als Counter.class.
+    </p>
+    <pre class="copyable">class GlobalCounter {
     private static int count;
-    public static synchronized void increment() { count++; }
-    public static synchronized int get() { return count; }
-}</pre><p>Ein synchronisierter Getter und ein synchronisierter Setter machen eine Folge wie if (get() &lt; 15) increment() nicht atomar. Prüfung und Änderung müssen gemeinsam geschützt werden. sleep() gibt den Monitor nicht frei.</p></section><section class="card" id="wait"><h2>wait, notify und notifyAll</h2><p>Busy Waiting prüft ständig eine Bedingung und verbraucht CPU-Zeit. Innerhalb von synchronized kann es sogar den Lieferanten aussperren. Auch sleep() löst dieses Problem nicht, weil der Monitor gehalten bleibt.</p><table><thead><tr><th>Methode</th><th>Verhalten</th></tr></thead><tbody><tr><td>wait()</td><td>Gibt den Monitor des aufgerufenen Objekts frei und wartet; erwirbt ihn vor Rückkehr erneut</td></tr><tr><td>wait(long millis)</td><td>Wie wait(), zusätzlich Zeitlimit; 0 bedeutet unbegrenzt</td></tr><tr><td>notify()</td><td>Wählt einen Thread aus dem Wait-Set dieses Objekts</td></tr><tr><td>notifyAll()</td><td>Weckt alle Threads aus diesem Wait-Set</td></tr></tbody></table><p>Alle drei Methoden verlangen, dass der aktuelle Thread genau den Monitor des betreffenden Objekts hält, sonst IllegalMonitorStateException. wait gibt keine anderen gehaltenen Monitore frei. notify gibt den Monitor nicht sofort frei. Geweckte Threads konkurrieren nach Freigabe erneut um ihn. Signale werden nicht gespeichert. while ist nötig wegen Spurious Wakeups und weil ein anderer Thread die Bedingung vorher wieder ändern kann.</p><pre class="copyable">class Lager {
+    public static synchronized void increment() {
+        count++;
+    }
+    public static synchronized int get() {
+        return count;
+    }
+}</pre>
+    <p>
+     Ein synchronisierter Getter und ein synchronisierter Setter machen eine Folge wie if (get() &lt; 15)
+     increment() nicht atomar. Prüfung und Änderung müssen gemeinsam geschützt werden. sleep() gibt den
+     Monitor nicht frei.
+    </p>
+   </section>
+   <section class="card" id="wait">
+    <h2>
+     wait, notify und notifyAll
+    </h2>
+    <p>
+     Busy Waiting prüft ständig eine Bedingung und verbraucht CPU-Zeit. Innerhalb von synchronized kann es
+     sogar den Lieferanten aussperren. Auch sleep() löst dieses Problem nicht, weil der Monitor gehalten
+     bleibt.
+    </p>
+    <table>
+     <thead>
+      <tr>
+       <th>
+        Methode
+       </th>
+       <th>
+        Verhalten
+       </th>
+      </tr>
+     </thead>
+     <tbody>
+      <tr>
+       <td>
+        wait()
+       </td>
+       <td>
+        Gibt den Monitor des aufgerufenen Objekts frei und wartet; erwirbt ihn vor Rückkehr erneut
+       </td>
+      </tr>
+      <tr>
+       <td>
+        wait(long millis)
+       </td>
+       <td>
+        Wie wait(), zusätzlich Zeitlimit; 0 bedeutet unbegrenzt
+       </td>
+      </tr>
+      <tr>
+       <td>
+        notify()
+       </td>
+       <td>
+        Wählt einen Thread aus dem Wait-Set dieses Objekts
+       </td>
+      </tr>
+      <tr>
+       <td>
+        notifyAll()
+       </td>
+       <td>
+        Weckt alle Threads aus diesem Wait-Set
+       </td>
+      </tr>
+     </tbody>
+    </table>
+    <p>
+     Alle drei Methoden verlangen, dass der aktuelle Thread genau den Monitor des betreffenden Objekts hält,
+     sonst IllegalMonitorStateException. wait gibt keine anderen gehaltenen Monitore frei. notify gibt den
+     Monitor nicht sofort frei. Geweckte Threads konkurrieren nach Freigabe erneut um ihn. Signale werden
+     nicht gespeichert. while ist nötig wegen Spurious Wakeups und weil ein anderer Thread die Bedingung
+     vorher wieder ändern kann.
+    </p>
+    <pre class="copyable">class Lager {
     private int bestand;
     private final int capacity = 100;
     public synchronized void liefere(int n) throws InterruptedException {
@@ -26,14 +329,37 @@
         bestand -= n;
         notifyAll();
     }
-}</pre><p>Ein Kunde mit Bedarf 10 wartet bei Bestand 0. Der Lieferant erwirbt den freigegebenen Monitor, liefert 10 und signalisiert. Erst nach Verlassen der Methode kann der Kunde den Monitor wieder erwerben und die Bedingung prüfen. Bei unterschiedlichen Mengen ist notifyAll sinnvoll. Für endliche Programme braucht man zusätzlich ein Abschlussprotokoll, damit niemand nach Ende der Produktion ewig wartet.</p></section><section class="card" id="locks"><h2>ReentrantLock und Condition</h2><p>Ein expliziter Lock erlaubt flexible Erwerbsarten. Anders als synchronized muss er vom Besitzer explizit freigegeben werden. lock() wartet auch bei Interrupt weiter; lockInterruptibly() erlaubt Abbruch. tryLock() liefert sofort boolean, tryLock(time, unit) wartet begrenzt und ist interruptibel.</p><pre class="copyable">Lock lock = new ReentrantLock();
+}</pre>
+    <p>
+     Ein Kunde mit Bedarf 10 wartet bei Bestand 0. Der Lieferant erwirbt den freigegebenen Monitor, liefert 10
+     und signalisiert. Erst nach Verlassen der Methode kann der Kunde den Monitor wieder erwerben und die
+     Bedingung prüfen. Bei unterschiedlichen Mengen ist notifyAll sinnvoll. Für endliche Programme braucht man
+     zusätzlich ein Abschlussprotokoll, damit niemand nach Ende der Produktion ewig wartet.
+    </p>
+   </section>
+   <section class="card" id="locks">
+    <h2>
+     ReentrantLock und Condition
+    </h2>
+    <p>
+     Ein expliziter Lock erlaubt flexible Erwerbsarten. Anders als synchronized muss er vom Besitzer explizit
+     freigegeben werden. lock() wartet auch bei Interrupt weiter; lockInterruptibly() erlaubt Abbruch.
+     tryLock() liefert sofort boolean, tryLock(time, unit) wartet begrenzt und ist interruptibel.
+    </p>
+    <pre class="copyable">Lock lock = new ReentrantLock();
 if (lock.tryLock()) {
     try {
         // kritischer Bereich
     } finally {
         lock.unlock();
     }
-}</pre><p>Bei false wurde kein Lock erworben. Ein unlock wäre falsch. Bei lockInterruptibly() steht der Erwerb ebenfalls vor dem try/finally. Condition erlaubt mehrere Wait-Sets pro Lock; await() gibt den zugehörigen Lock frei, signal()/signalAll() benötigen ihn. Auch hier immer while.</p><pre class="copyable">class Lager {
+}</pre>
+    <p>
+     Bei false wurde kein Lock erworben. Ein unlock wäre falsch. Bei lockInterruptibly() steht der Erwerb
+     ebenfalls vor dem try/finally. Condition erlaubt mehrere Wait-Sets pro Lock; await() gibt den zugehörigen
+     Lock frei, signal()/signalAll() benötigen ihn. Auch hier immer while.
+    </p>
+    <pre class="copyable">class Lager {
     private final Lock lock = new ReentrantLock();
     private final Condition ware = lock.newCondition();
     private final Condition platz = lock.newCondition();
@@ -45,7 +371,9 @@ if (lock.tryLock()) {
             while (bestand &gt; 100 - n) platz.await();
             bestand += n;
             ware.signalAll();
-        } finally { lock.unlock(); }
+        } finally {
+        lock.unlock();
+    }
     }
     public void verkaufe(int n) throws InterruptedException {
         if (n &lt;= 0 || n &gt; 100) throw new IllegalArgumentException();
@@ -54,14 +382,95 @@ if (lock.tryLock()) {
             while (bestand &lt; n) ware.await();
             bestand -= n;
             platz.signalAll();
-        } finally { lock.unlock(); }
+        } finally {
+        lock.unlock();
     }
-}</pre><p>signal() weckt nur einen Wartenden der jeweiligen Condition, nicht alle. Bei verschiedenen Mengen kann der ausgewählte Thread weiterhin nicht fortfahren; signalAll() ist hier robuster. Ein ReentrantLock ist nicht der intrinsische Monitor des Lock-Objekts: lock.lock() berechtigt nicht zu lock.wait().</p></section><section class="card" id="queue"><h2>Producer/Consumer</h2><p>BlockingQueue koordiniert Produzenten und Konsumenten automatisch. ArrayBlockingQueue hat feste Kapazität und FIFO; LinkedBlockingQueue hat optional eine feste Kapazitätsgrenze, die nicht nachträglich geändert wird. PriorityBlockingQueue ist nicht FIFO. null ist nicht erlaubt.</p><table><thead><tr><th>Einfügen</th><th>Entnehmen</th><th>Verhalten</th></tr></thead><tbody><tr><td>add(e)</td><td>remove()</td><td>Exception bei voll/leer</td></tr><tr><td>offer(e)</td><td>poll()</td><td>false/null bei voll/leer</td></tr><tr><td>put(e)</td><td>take()</td><td>Wartet interruptibel</td></tr><tr><td>offer(e,t,u)</td><td>poll(t,u)</td><td>Wartet begrenzt; false/null bei Timeout</td></tr></tbody></table><pre class="copyable">BlockingQueue&lt;Integer&gt; q = new ArrayBlockingQueue&lt;&gt;(5);
+    }
+}</pre>
+    <p>
+     signal() weckt nur einen Wartenden der jeweiligen Condition, nicht alle. Bei verschiedenen Mengen kann
+     der ausgewählte Thread weiterhin nicht fortfahren; signalAll() ist hier robuster. Ein ReentrantLock ist
+     nicht der intrinsische Monitor des Lock-Objekts: lock.lock() berechtigt nicht zu lock.wait().
+    </p>
+   </section>
+   <section class="card" id="queue">
+    <h2>
+     Producer/Consumer
+    </h2>
+    <p>
+     BlockingQueue koordiniert Produzenten und Konsumenten automatisch. ArrayBlockingQueue hat feste Kapazität
+     und FIFO; LinkedBlockingQueue hat optional eine feste Kapazitätsgrenze, die nicht nachträglich geändert
+     wird. PriorityBlockingQueue ist nicht FIFO. null ist nicht erlaubt.
+    </p>
+    <table>
+     <thead>
+      <tr>
+       <th>
+        Einfügen
+       </th>
+       <th>
+        Entnehmen
+       </th>
+       <th>
+        Verhalten
+       </th>
+      </tr>
+     </thead>
+     <tbody>
+      <tr>
+       <td>
+        add(e)
+       </td>
+       <td>
+        remove()
+       </td>
+       <td>
+        Exception bei voll/leer
+       </td>
+      </tr>
+      <tr>
+       <td>
+        offer(e)
+       </td>
+       <td>
+        poll()
+       </td>
+       <td>
+        false/null bei voll/leer
+       </td>
+      </tr>
+      <tr>
+       <td>
+        put(e)
+       </td>
+       <td>
+        take()
+       </td>
+       <td>
+        Wartet interruptibel
+       </td>
+      </tr>
+      <tr>
+       <td>
+        offer(e,t,u)
+       </td>
+       <td>
+        poll(t,u)
+       </td>
+       <td>
+        Wartet begrenzt; false/null bei Timeout
+       </td>
+      </tr>
+     </tbody>
+    </table>
+    <pre class="copyable">BlockingQueue&lt;Integer&gt; q = new ArrayBlockingQueue&lt;&gt;(5);
 Runnable producer = () -&gt; {
     try {
         for (int i=0; i&lt;10; i++) q.put(i);
         q.put(-1); // Ende-Signal, kein Nutzwert
-    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
 };
 Thread a = new Thread(producer), b = new Thread(producer);
 a.start(); b.start();
@@ -71,55 +480,245 @@ while (ends &lt; 2) {
     if (value == -1) ends++;
     else System.out.println(value);
 }
-a.join(); b.join(); // 20 Nutzwerte, Reihenfolge variabel</pre><p>Das Beispiel setzt normalen Abschluss beider Produzenten voraus; bei Abbruch braucht es ein gemeinsames Abbruchprotokoll. PipedInputStream/PipedOutputStream verbinden zwei Threads über einen internen Bytepuffer. Lesen blockiert bei leerem Puffer, Schreiben bei vollem. Der Schreiber schließt den Stream, damit der Leser EOF erkennt. Für Text gibt es PipedReader/PipedWriter; für Objekte ist BlockingQueue meist einfacher.</p></section><section class="card" id="werkzeuge"><h2>Semaphore, Latch und Barrier</h2><h3>Semaphore</h3><p>Eine Semaphore verwaltet Permits. acquire() nimmt eines und wartet interruptibel, wenn keines verfügbar ist. release() erhöht den Zähler, auch ohne vorheriges acquire; Permits haben keinen Besitzer. Deshalb nur nach erfolgreichem Erwerb freigeben, wenn eine Ressource begrenzt wird. Fairness true bevorzugt wartende Threads in FIFO-Reihenfolge an internen Erwerbspunkten; untimed tryAcquire darf vorbeiziehen.</p><pre class="copyable">Semaphore sem = new Semaphore(2, true);
+a.join(); b.join(); // 20 Nutzwerte, Reihenfolge variabel</pre>
+    <p>
+     Das Beispiel setzt normalen Abschluss beider Produzenten voraus; bei Abbruch braucht es ein gemeinsames
+     Abbruchprotokoll. PipedInputStream/PipedOutputStream verbinden zwei Threads über einen internen
+     Bytepuffer. Lesen blockiert bei leerem Puffer, Schreiben bei vollem. Der Schreiber schließt den Stream,
+     damit der Leser EOF erkennt. Für Text gibt es PipedReader/PipedWriter; für Objekte ist BlockingQueue
+     meist einfacher.
+    </p>
+   </section>
+   <section class="card" id="werkzeuge">
+    <h2>
+     Semaphore, Latch und Barrier
+    </h2>
+    <h3>
+     Semaphore
+    </h3>
+    <p>
+     Eine Semaphore verwaltet Permits. acquire() nimmt eines und wartet interruptibel, wenn keines verfügbar
+     ist. release() erhöht den Zähler, auch ohne vorheriges acquire; Permits haben keinen Besitzer. Deshalb
+     nur nach erfolgreichem Erwerb freigeben, wenn eine Ressource begrenzt wird. Fairness true bevorzugt
+     wartende Threads in FIFO-Reihenfolge an internen Erwerbspunkten; untimed tryAcquire darf vorbeiziehen.
+    </p>
+    <pre class="copyable">Semaphore sem = new Semaphore(2, true);
 Runnable print = () -&gt; {
     try {
         sem.acquire();
-        try { System.out.println(&quot;Drucke&quot;); Thread.sleep(100); }
-        finally { sem.release(); }
-    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        try {
+        System.out.println("Drucke");
+        Thread.sleep(100);
+    }
+        finally {
+        sem.release();
+    }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
 };
-// Maximal zwei Threads gleichzeitig im Druckbereich.</pre><p>acquire(n) erwirbt n Permits; tryAcquire() liefert sofort boolean; tryAcquire(timeout, unit) wartet begrenzt; acquireUninterruptibly wartet trotz Interrupt und erhält den Interruptstatus. availablePermits() ist eine Momentaufnahme; drainPermits() setzt den verfügbaren Zähler auf 0 und liefert den vorherigen Wert (auch negativ möglich). getQueueLength() ist eine Schätzung, hasQueuedThreads() eine Momentaufnahme. Negative Startwerte sind erlaubt; release kann den Startwert überschreiten.</p><h3>CountDownLatch</h3><p>Ein einmaliger Countdown. countDown() reduziert den Zähler bis 0, await() wartet interruptibel auf 0; danach bleibt das Latch offen. await(timeout, unit) liefert true bei 0, false bei Timeout. getCount() liefert den aktuellen Stand. Ein Latch zählt Ereignisse, nicht automatisch beendete Threads.</p><pre class="copyable">CountDownLatch done = new CountDownLatch(3);
+// Maximal zwei Threads gleichzeitig im Druckbereich.</pre>
+    <p>
+     acquire(n) erwirbt n Permits; tryAcquire() liefert sofort boolean; tryAcquire(timeout, unit) wartet
+     begrenzt; acquireUninterruptibly wartet trotz Interrupt und erhält den Interruptstatus.
+     availablePermits() ist eine Momentaufnahme; drainPermits() setzt den verfügbaren Zähler auf 0 und liefert
+     den vorherigen Wert (auch negativ möglich). getQueueLength() ist eine Schätzung, hasQueuedThreads() eine
+     Momentaufnahme. Negative Startwerte sind erlaubt; release kann den Startwert überschreiten.
+    </p>
+    <h3>
+     CountDownLatch
+    </h3>
+    <p>
+     Ein einmaliger Countdown. countDown() reduziert den Zähler bis 0, await() wartet interruptibel auf 0;
+     danach bleibt das Latch offen. await(timeout, unit) liefert true bei 0, false bei Timeout. getCount()
+     liefert den aktuellen Stand. Ein Latch zählt Ereignisse, nicht automatisch beendete Threads.
+    </p>
+    <pre class="copyable">CountDownLatch done = new CountDownLatch(3);
 for (int i=0;i&lt;3;i++) new Thread(() -&gt; {
-    try { System.out.println(&quot;Teilaufgabe&quot;); }
-    finally { done.countDown(); }
+    try {
+        System.out.println("Teilaufgabe");
+    }
+    finally {
+        done.countDown();
+    }
 }).start();
 done.await();
-System.out.println(&quot;Alle Teilaufgaben abgeschlossen&quot;);</pre><h3>CyclicBarrier</h3><p>Eine feste Anzahl Teilnehmer wartet an einem Treffpunkt. await() liefert einen Ankunftsindex: letzter Teilnehmer 0, erster parties-1. Eine optionale Barrier-Aktion läuft im letzten ankommenden Thread vor Freigabe. Nach erfolgreicher Runde ist die Barriere wiederverwendbar. Timeout oder Interrupt eines Wartenden bricht die Runde; andere erhalten BrokenBarrierException. reset() bricht aktuelle Wartende ab und startet eine neue Generation.</p><pre class="copyable">CyclicBarrier barrier = new CyclicBarrier(3,
-    () -&gt; System.out.println(&quot;Alle bereit&quot;));
+System.out.println("Alle Teilaufgaben abgeschlossen");</pre>
+    <h3>
+     CyclicBarrier
+    </h3>
+    <p>
+     Eine feste Anzahl Teilnehmer wartet an einem Treffpunkt. await() liefert einen Ankunftsindex: letzter
+     Teilnehmer 0, erster parties-1. Eine optionale Barrier-Aktion läuft im letzten ankommenden Thread vor
+     Freigabe. Nach erfolgreicher Runde ist die Barriere wiederverwendbar. Timeout oder Interrupt eines
+     Wartenden bricht die Runde; andere erhalten BrokenBarrierException. reset() bricht aktuelle Wartende ab
+     und startet eine neue Generation.
+    </p>
+    <pre class="copyable">CyclicBarrier barrier = new CyclicBarrier(3,
+    () -&gt; System.out.println("Alle bereit"));
 Runnable worker = () -&gt; {
     try {
         for (int r=0;r&lt;2;r++) {
-            System.out.println(&quot;Vorbereitung &quot; + r);
+            System.out.println("Vorbereitung " + r);
             barrier.await();
-            System.out.println(&quot;Weiter &quot; + r);
+            System.out.println("Weiter " + r);
         }
-    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-      catch (BrokenBarrierException e) { System.out.println(&quot;Abbruch&quot;); }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
+      catch (BrokenBarrierException e) {
+        System.out.println("Abbruch");
+    }
 };
-for (int i=0;i&lt;3;i++) new Thread(worker).start();</pre><p>getParties(), getNumberWaiting(), isBroken() liefern Teilnehmerzahl, momentane Wartezahl und Fehlerzustand. Latch ist ein einmaliges Signal, Barrier ein wiederholbarer Treffpunkt; beide sind keine Lager-Warteschlange.</p></section><section class="card" id="executor"><h2>ExecutorService, Callable und Future</h2><p>ExecutorService trennt Aufgaben von Thread-Verwaltung. FixedThreadPool(n) begrenzt aktive Worker, nutzt aber eine unbeschränkte Warteschlange. CachedThreadPool kann viele Threads erzeugen; SingleThreadExecutor führt Aufgaben seriell aus; ScheduledThreadPool plant verzögerte und wiederkehrende Aufgaben. Java 21 bietet newVirtualThreadPerTaskExecutor() für viele blockierende Aufgaben.</p><pre class="copyable">try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
+for (int i=0;i&lt;3;i++) new Thread(worker).start();</pre>
+    <p>
+     getParties(), getNumberWaiting(), isBroken() liefern Teilnehmerzahl, momentane Wartezahl und
+     Fehlerzustand. Latch ist ein einmaliges Signal, Barrier ein wiederholbarer Treffpunkt; beide sind keine
+     Lager-Warteschlange.
+    </p>
+   </section>
+   <section class="card" id="executor">
+    <h2>
+     ExecutorService, Callable und Future
+    </h2>
+    <p>
+     ExecutorService trennt Aufgaben von Thread-Verwaltung. FixedThreadPool(n) begrenzt aktive Worker, nutzt
+     aber eine unbeschränkte Warteschlange. CachedThreadPool kann viele Threads erzeugen; SingleThreadExecutor
+     führt Aufgaben seriell aus; ScheduledThreadPool plant verzögerte und wiederkehrende Aufgaben. Java 21
+     bietet newVirtualThreadPerTaskExecutor() für viele blockierende Aufgaben.
+    </p>
+    <pre class="copyable">try (ExecutorService pool = Executors.newFixedThreadPool(2)) {
     Callable&lt;Integer&gt; task = () -&gt; 21 * 2;
     Future&lt;Integer&gt; result = pool.submit(task);
     System.out.println(result.get()); // 42
-}</pre><p>Callable.call() liefert einen Wert und darf checked Exceptions werfen. Runnable.run() liefert void. submit liefert Future; execute liefert keinen Rückgabewert. Future.get wartet auf Abschluss; ExecutionException kapselt Fehler der Aufgabe, CancellationException signalisiert Abbruch, InterruptedException betrifft den wartenden Thread. get(timeout, unit) wirft TimeoutException, bricht die Aufgabe aber nicht ab. cancel(true) versucht zu unterbrechen; isDone umfasst Erfolg, Fehler und Abbruch, isCancelled nur Abbruch.</p><table><thead><tr><th>Methode</th><th>Bedeutung</th></tr></thead><tbody><tr><td>invokeAll(tasks)</td><td>Wartet auf alle, liefert Futures in Eingabereihenfolge</td></tr><tr><td>invokeAny(tasks)</td><td>Liefert Ergebnis einer erfolgreich abgeschlossenen Aufgabe; nicht zwingend der zuerst beendeten</td></tr><tr><td>shutdown()</td><td>Keine neuen Aufgaben, bereits eingereichte werden abgearbeitet</td></tr><tr><td>shutdownNow()</td><td>Versucht laufende Aufgaben zu unterbrechen, liefert noch nicht gestartete Aufgaben</td></tr><tr><td>awaitTermination(t,u)</td><td>Wartet nach Shutdown; true bei Terminierung, false bei Timeout</td></tr></tbody></table><pre class="copyable">pool.shutdown();
+}</pre>
+    <p>
+     Callable.call() liefert einen Wert und darf checked Exceptions werfen. Runnable.run() liefert void.
+     submit liefert Future; execute liefert keinen Rückgabewert. Future.get wartet auf Abschluss;
+     ExecutionException kapselt Fehler der Aufgabe, CancellationException signalisiert Abbruch,
+     InterruptedException betrifft den wartenden Thread. get(timeout, unit) wirft TimeoutException, bricht die
+     Aufgabe aber nicht ab. cancel(true) versucht zu unterbrechen; isDone umfasst Erfolg, Fehler und Abbruch,
+     isCancelled nur Abbruch.
+    </p>
+    <table>
+     <thead>
+      <tr>
+       <th>
+        Methode
+       </th>
+       <th>
+        Bedeutung
+       </th>
+      </tr>
+     </thead>
+     <tbody>
+      <tr>
+       <td>
+        invokeAll(tasks)
+       </td>
+       <td>
+        Wartet auf alle, liefert Futures in Eingabereihenfolge
+       </td>
+      </tr>
+      <tr>
+       <td>
+        invokeAny(tasks)
+       </td>
+       <td>
+        Liefert Ergebnis einer erfolgreich abgeschlossenen Aufgabe; nicht zwingend der zuerst beendeten
+       </td>
+      </tr>
+      <tr>
+       <td>
+        shutdown()
+       </td>
+       <td>
+        Keine neuen Aufgaben, bereits eingereichte werden abgearbeitet
+       </td>
+      </tr>
+      <tr>
+       <td>
+        shutdownNow()
+       </td>
+       <td>
+        Versucht laufende Aufgaben zu unterbrechen, liefert noch nicht gestartete Aufgaben
+       </td>
+      </tr>
+      <tr>
+       <td>
+        awaitTermination(t,u)
+       </td>
+       <td>
+        Wartet nach Shutdown; true bei Terminierung, false bei Timeout
+       </td>
+      </tr>
+     </tbody>
+    </table>
+    <pre class="copyable">pool.shutdown();
 try {
     if (!pool.awaitTermination(1, TimeUnit.SECONDS)) pool.shutdownNow();
 } catch (InterruptedException e) {
     pool.shutdownNow();
     Thread.currentThread().interrupt();
-}</pre><p>Java 21: ExecutorService.close() wartet auf Beendigung und kann bei Interrupt shutdownNow auslösen. FutureTask implementiert Runnable und Future; new Thread(new FutureTask<>(callable)) ist möglich, new Thread(future) mit statischem Typ Future dagegen nicht. ForkJoinPool ist selbst ein ExecutorService und eignet sich für rekursive Teilaufgaben mit Work-Stealing.</p></section><section class="card" id="atomic"><h2>volatile und AtomicInteger</h2><p>volatile garantiert Sichtbarkeit und Ordnungsregeln des Java Memory Model: Ein volatile-Schreibzugriff happens-before einem späteren Lesezugriff derselben Variablen. Es bedeutet nicht zwingend direkten Hauptspeicherzugriff. volatile int x macht x++ nicht atomar. Eine volatile Referenz macht nicht alle Felder des referenzierten Objekts threadsicher.</p><pre class="copyable">class Worker implements Runnable {
+}</pre>
+    <p>
+     Java 21: ExecutorService.close() wartet auf Beendigung und kann bei Interrupt shutdownNow auslösen.
+     FutureTask implementiert Runnable und Future; new Thread(new FutureTask&lt;&gt;(callable)) ist möglich,
+     new Thread(future) mit statischem Typ Future dagegen nicht. ForkJoinPool ist selbst ein ExecutorService
+     und eignet sich für rekursive Teilaufgaben mit Work-Stealing.
+    </p>
+   </section>
+   <section class="card" id="atomic">
+    <h2>
+     volatile und AtomicInteger
+    </h2>
+    <p>
+     volatile garantiert Sichtbarkeit und Ordnungsregeln des Java Memory Model: Ein volatile-Schreibzugriff
+     happens-before einem späteren Lesezugriff derselben Variablen. Es bedeutet nicht zwingend direkten
+     Hauptspeicherzugriff. volatile int x macht x++ nicht atomar. Eine volatile Referenz macht nicht alle
+     Felder des referenzierten Objekts threadsicher.
+    </p>
+    <pre class="copyable">class Worker implements Runnable {
     private volatile boolean running = true;
-    public void stop() { running = false; }
-    public void run() {
-        while (running) { /* kurze Arbeit */ }
+    public void stop() {
+        running = false;
     }
-}</pre><p>Für einen einfachen Zähler eignen sich atomare Operationen. getAndIncrement liefert den alten Wert, incrementAndGet den neuen; analog decrementAndGet, getAndDecrement, addAndGet und getAndAdd. compareAndSet(expected, update) ändert nur bei passendem aktuellem Wert und liefert boolean.</p><pre class="copyable">AtomicInteger count = new AtomicInteger();
+    public void run() {
+        while (running) {
+        /* kurze Arbeit */
+    }
+    }
+}</pre>
+    <p>
+     Für einen einfachen Zähler eignen sich atomare Operationen. getAndIncrement liefert den alten Wert,
+     incrementAndGet den neuen; analog decrementAndGet, getAndDecrement, addAndGet und getAndAdd.
+     compareAndSet(expected, update) ändert nur bei passendem aktuellem Wert und liefert boolean.
+    </p>
+    <pre class="copyable">AtomicInteger count = new AtomicInteger();
 Runnable task = () -&gt; {
     for (int i=0;i&lt;1000;i++) count.incrementAndGet();
 };
 Thread a = new Thread(task), b = new Thread(task);
 a.start(); b.start(); a.join(); b.join();
-System.out.println(count.get()); // garantiert 2000</pre><p>Ohne join könnte die Ausgabe vor Abschluss erfolgen. Atomare Einzeloperationen machen mehrere zusammengehörige Felder nicht automatisch konsistent.</p></section><section class="card" id="uebungen"><h2>Übungen und Monitor-Aufgaben</h2><article><h3>1. Monitor-Varianten I–IV</h3><p>Analysiere den Originalcode: Welche Threads sperren denselben Monitor? Welche Reihenfolgen und Laufzeiten sind möglich?</p><pre class="copyable">package monitor;
+System.out.println(count.get()); // garantiert 2000</pre>
+    <p>
+     Ohne join könnte die Ausgabe vor Abschluss erfolgen. Atomare Einzeloperationen machen mehrere
+     zusammengehörige Felder nicht automatisch konsistent.
+    </p>
+   </section>
+   <section class="card" id="uebungen">
+    <h2>
+     Übungen und Monitor-Aufgaben
+    </h2>
+    <article>
+     <h3>
+      1. Monitor-Varianten I–IV (Original)
+     </h3>
+     <p>
+      Analysiere den Originalcode: Welche Threads sperren denselben Monitor? Welche Reihenfolgen und
+      Laufzeiten sind möglich?
+     </p>
+     <pre class="copyable">package monitor;
 
 public class Monitor implements Runnable {
     private int variant = 0;
@@ -133,7 +732,7 @@ public class Monitor implements Runnable {
 
     public static void increment_1() {
         synchronized (Monitor.class) {
-            System.out.println(&quot;Start: &quot; + Thread.currentThread().getName());
+            System.out.println("Start: " + Thread.currentThread().getName());
             counter_class++;
             try {
                 Thread.sleep(5000);
@@ -143,7 +742,7 @@ public class Monitor implements Runnable {
 
     public synchronized void increment_2() {
         synchronized (this.getClass()) {
-            System.out.println(&quot;Start: &quot; + Thread.currentThread().getName());
+            System.out.println("Start: " + Thread.currentThread().getName());
             this.counter_instanz++;
             try {
                 Thread.sleep(5000);
@@ -152,7 +751,7 @@ public class Monitor implements Runnable {
     }
 
     public synchronized void increment_3() {
-        System.out.println(&quot;Start: &quot; + Thread.currentThread().getName());
+        System.out.println("Start: " + Thread.currentThread().getName());
         this.counter_instanz++;
         try {
             Thread.sleep(3000);
@@ -161,7 +760,7 @@ public class Monitor implements Runnable {
 
     public void increment_4() {
         synchronized (lock) {
-            System.out.println(&quot;Start: &quot; + Thread.currentThread().getName());
+            System.out.println("Start: " + Thread.currentThread().getName());
             counter_instanz++;
             try {
                 Thread.sleep(3000);
@@ -204,7 +803,7 @@ public class Monitor implements Runnable {
             }
             default -&gt; {}
         }
-        System.out.println(&quot;Fertig: &quot; + Thread.currentThread().getName());
+        System.out.println("Fertig: " + Thread.currentThread().getName());
     }
     public static void main(String[] args) { // Output?
          start(1);        
@@ -212,7 +811,102 @@ public class Monitor implements Runnable {
          start(3);       
          start(4);   
     }
-}</pre><div class="task-actions"><button onclick="toggleSolution('hint-1')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-1')">Lösung anzeigen</button></div><div class="solution" id="hint-1"><p>m3 wird zweimal verwendet. main wartet nicht zwischen den Varianten. sleep gibt keinen Monitor frei.</p></div><div class="solution" id="solution-1"><table><thead><tr><th>Variante</th><th>Monitor</th><th>Ergebnis bei isoliertem Start</th></tr></thead><tbody><tr><td>1</td><td>Monitor.class</td><td>Alle vier nacheinander; counter_class +4; ca. 20 s</td></tr><tr><td>2</td><td>this und this.getClass()</td><td>Alle vier nacheinander über Monitor.class; ca. 20 s</td></tr><tr><td>3</td><td>this</td><td>m1, m2 und m3 parallel möglich; zwei m3-Aufrufe nacheinander; ca. 6 s</td></tr><tr><td>4</td><td>privates lock je Instanz</td><td>Wie 3; anderer Monitor als this; ca. 6 s</td></tr></tbody></table><p>Die Zeiten sind idealisierte Untergrenzen bei ununterbrochenem sleep und ohne Scheduling-Verzögerung. Im Original startet main alle vier Gruppen ohne join: 16 Threads überlappen. Varianten 1 und 2 teilen Monitor.class (hier keine Unterklassen); insgesamt etwa 40 Sekunden allein für diese acht geschützten Schlafphasen. Varianten 3 und 4 verwenden jeweils neue Instanzen und können gleichzeitig laufen. Start-Ausgaben innerhalb desselben Monitors sind serialisiert; Fertig steht außerhalb des Locks und kann nach dem nächsten Start erscheinen. Keine feste Gesamtausgabe. Die Instanzzähler sind je Gruppe 1, 1, 2 (Varianten 2–4); Variante 1 erhöht nur den statischen Zähler. Leere catch-Blöcke sind absichtlich im Original erhalten, in produktivem Code Interrupt behandeln.</p></div></article><article><h3>2. Fehlerhafte Szenarien I–VII</h3><p>Finde und begründe jeden Fehler. Korrigiere die Synchronisation.</p><pre class="copyable">package fehlerhafteSzenarien;
+}</pre>
+     <div class="task-actions">
+      <button onclick="toggleSolution('hint-1')">
+       Hinweis anzeigen
+      </button>
+      <button onclick="toggleSolution('solution-1')">
+       Lösung anzeigen
+      </button>
+     </div>
+     <div class="solution" id="hint-1">
+      <p>
+       m3 wird zweimal verwendet. main wartet nicht zwischen den Varianten. sleep gibt keinen Monitor frei.
+      </p>
+     </div>
+     <div class="solution" id="solution-1">
+      <table>
+       <thead>
+        <tr>
+         <th>
+          Variante
+         </th>
+         <th>
+          Monitor
+         </th>
+         <th>
+          Ergebnis bei isoliertem Start
+         </th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr>
+         <td>
+          1
+         </td>
+         <td>
+          Monitor.class
+         </td>
+         <td>
+          Alle vier nacheinander; counter_class +4; ca. 20 s
+         </td>
+        </tr>
+        <tr>
+         <td>
+          2
+         </td>
+         <td>
+          this und this.getClass()
+         </td>
+         <td>
+          Alle vier nacheinander über Monitor.class; ca. 20 s
+         </td>
+        </tr>
+        <tr>
+         <td>
+          3
+         </td>
+         <td>
+          this
+         </td>
+         <td>
+          m1, m2 und m3 parallel möglich; zwei m3-Aufrufe nacheinander; ca. 6 s
+         </td>
+        </tr>
+        <tr>
+         <td>
+          4
+         </td>
+         <td>
+          privates lock je Instanz
+         </td>
+         <td>
+          Wie 3; anderer Monitor als this; ca. 6 s
+         </td>
+        </tr>
+       </tbody>
+      </table>
+      <p>
+       Die Zeiten sind idealisierte Untergrenzen bei ununterbrochenem sleep und ohne Scheduling-Verzögerung.
+       Im Original startet main alle vier Gruppen ohne join: 16 Threads überlappen. Varianten 1 und 2 teilen
+       Monitor.class (hier keine Unterklassen); insgesamt etwa 40 Sekunden allein für diese acht geschützten
+       Schlafphasen. Varianten 3 und 4 verwenden jeweils neue Instanzen und können gleichzeitig laufen.
+       Start-Ausgaben innerhalb desselben Monitors sind serialisiert; Fertig steht außerhalb des Locks und
+       kann nach dem nächsten Start erscheinen. Keine feste Gesamtausgabe. Die Instanzzähler sind je Gruppe 1,
+       1, 2 (Varianten 2–4); Variante 1 erhöht nur den statischen Zähler. Leere catch-Blöcke sind absichtlich
+       im Original erhalten, in produktivem Code Interrupt behandeln.
+      </p>
+     </div>
+    </article>
+    <article>
+     <h3>
+      2. Fehlerhafte Szenarien I–VII (Original)
+     </h3>
+     <p>
+      Finde und begründe jeden Fehler. Korrigiere die Synchronisation.
+     </p>
+     <pre class="copyable">package fehlerhafteSzenarien;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -305,7 +999,122 @@ class Example_VII {
             lock1.unlock();
         }
     }
-}</pre><div class="task-actions"><button onclick="toggleSolution('hint-2')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-2')">Lösung anzeigen</button></div><div class="solution" id="hint-2"><p>Vergleiche jeweils den gehaltenen Monitor bzw. Lock mit dem Objekt, auf dem gewartet oder signalisiert wird.</p></div><div class="solution" id="solution-2"><table><thead><tr><th>Fall</th><th>Fehler</th><th>Korrektur</th></tr></thead><tbody><tr><td>I</td><td>lock.wait() ohne Besitz von lock</td><td>synchronized(lock) und while(Bedingung)</td></tr><tr><td>II</td><td>wait() auf this ohne Monitor</td><td>synchronized(this) oder synchronized Methode</td></tr><tr><td>III</td><td>Methode hält this, wartet aber auf Thread.currentThread()</td><td>wait() auf this verwenden</td></tr><tr><td>IV</td><td>ArrayList nicht threadsicher, auch getSize ungeschützt</td><td>beide Methoden synchronized oder gemeinsamer privater Lock</td></tr><tr><td>V</td><td>ReentrantLock erworben, aber Object.wait() auf this</td><td>Condition erzeugen und await() unter lock verwenden</td></tr><tr><td>VI</td><td>signal() ohne zugehörigen Lock</td><td>lock.lock(); try { full.signal(); } finally { lock.unlock(); }</td></tr><tr><td>VII</td><td>lock1 gehalten, empty gehört zu lock2</td><td>lock2 erwerben und im finally freigeben</td></tr></tbody></table><p>I, II, III, V, VI, VII führen bei den gezeigten gewöhnlichen Aufrufen zu IllegalMonitorStateException; IV kann falsche Ergebnisse oder beschädigte Listenstruktur verursachen. Ein korrektes wait/await braucht eine veränderbare Bedingung und einen Signalisierer; while(true) allein würde nie regulär enden.</p><pre class="copyable">class ExampleFixed {
+}</pre>
+     <div class="task-actions">
+      <button onclick="toggleSolution('hint-2')">
+       Hinweis anzeigen
+      </button>
+      <button onclick="toggleSolution('solution-2')">
+       Lösung anzeigen
+      </button>
+     </div>
+     <div class="solution" id="hint-2">
+      <p>
+       Vergleiche jeweils den gehaltenen Monitor bzw. Lock mit dem Objekt, auf dem gewartet oder signalisiert wird.
+      </p>
+     </div>
+     <div class="solution" id="solution-2">
+      <table>
+       <thead>
+        <tr>
+         <th>
+          Fall
+         </th>
+         <th>
+          Fehler
+         </th>
+         <th>
+          Korrektur
+         </th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr>
+         <td>
+          I
+         </td>
+         <td>
+          lock.wait() ohne Besitz von lock
+         </td>
+         <td>
+          synchronized(lock) und while(Bedingung)
+         </td>
+        </tr>
+        <tr>
+         <td>
+          II
+         </td>
+         <td>
+          wait() auf this ohne Monitor
+         </td>
+         <td>
+          synchronized(this) oder synchronized Methode
+         </td>
+        </tr>
+        <tr>
+         <td>
+          III
+         </td>
+         <td>
+          Methode hält this, wartet aber auf Thread.currentThread()
+         </td>
+         <td>
+          wait() auf this verwenden
+         </td>
+        </tr>
+        <tr>
+         <td>
+          IV
+         </td>
+         <td>
+          ArrayList nicht threadsicher, auch getSize ungeschützt
+         </td>
+         <td>
+          beide Methoden synchronized oder gemeinsamer privater Lock
+         </td>
+        </tr>
+        <tr>
+         <td>
+          V
+         </td>
+         <td>
+          ReentrantLock erworben, aber Object.wait() auf this
+         </td>
+         <td>
+          Condition erzeugen und await() unter lock verwenden
+         </td>
+        </tr>
+        <tr>
+         <td>
+          VI
+         </td>
+         <td>
+          signal() ohne zugehörigen Lock
+         </td>
+         <td>
+          lock.lock(); try { full.signal(); } finally { lock.unlock(); }
+         </td>
+        </tr>
+        <tr>
+         <td>
+          VII
+         </td>
+         <td>
+          lock1 gehalten, empty gehört zu lock2
+         </td>
+         <td>
+          lock2 erwerben und im finally freigeben
+         </td>
+        </tr>
+       </tbody>
+      </table>
+      <p>
+       I, II, III, V, VI, VII führen bei den gezeigten gewöhnlichen Aufrufen zu IllegalMonitorStateException;
+       IV kann falsche Ergebnisse oder beschädigte Listenstruktur verursachen. Ein korrektes wait/await
+       braucht eine veränderbare Bedingung und einen Signalisierer; while(true) allein würde nie regulär
+       enden.
+      </p>
+      <pre class="copyable">class ExampleFixed {
     private final Object lock = new Object();
     private boolean ready;
     public void testmethod() throws InterruptedException {
@@ -314,34 +1123,210 @@ class Example_VII {
         }
     }
     public void setReady() {
-        synchronized (lock) { ready = true; lock.notifyAll(); }
+        synchronized (lock) {
+        ready = true;
+        lock.notifyAll();
     }
-}</pre><pre class="copyable">class ExampleLockFixed {
+    }
+}</pre>
+      <pre class="copyable">class ExampleLockFixed {
     private final Lock lock = new ReentrantLock();
     private final Condition readyCondition = lock.newCondition();
     private boolean ready;
     public void testmethod() throws InterruptedException {
         lock.lockInterruptibly();
-        try { while (!ready) readyCondition.await(); }
-        finally { lock.unlock(); }
+        try {
+        while (!ready) readyCondition.await();
+    }
+        finally {
+        lock.unlock();
+    }
     }
     public void setReady() {
         lock.lock();
-        try { ready = true; readyCondition.signalAll(); }
-        finally { lock.unlock(); }
+        try {
+        ready = true;
+        readyCondition.signalAll();
     }
-}</pre></div></article><article><h3>3. Zusatz: Lager mit maximal 15 Transaktionen</h3><p>Erweitere das Lager so, dass Prüfung und Änderung atomar erfolgen und wartende Threads nach Schließung aufwachen.</p><div class="task-actions"><button onclick="toggleSolution('hint-3')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-3')">Lösung anzeigen</button></div><div class="solution" id="hint-3"><p>Prüfe die Schließung auch nach wait; notifyAll nach jeder Änderung.</p></div><div class="solution" id="solution-3"><pre class="copyable">class Lager {
-    private int bestand = 100, transaktionen;
-    public synchronized boolean aendere(int delta) throws InterruptedException {
-        if (delta == 0 || delta &lt; -200 || delta &gt; 200)
-            throw new IllegalArgumentException();
-        while (transaktionen &lt; 15 &amp;&amp;
-               (bestand + delta &lt; 0 || bestand + delta &gt; 200)) wait();
-        if (transaktionen &gt;= 15) return false;
-        bestand += delta;
-        transaktionen++;
-        System.out.println(bestand + &quot; / &quot; + transaktionen);
-        notifyAll();
-        return true;
+        finally {
+        lock.unlock();
     }
-}</pre><p>Für einen vollständigen Test können ein Lieferant mit +10 und ein Kunde mit -10 jeweils bis false wiederholen. Bei anderen Mengen oder vorzeitigem Ende braucht es gegebenenfalls ein zusätzliches Schließsignal.</p></div></article></section></main><script src="script.js"></script></body></html>
+    }
+}</pre>
+     </div>
+    </article>
+    <article>
+     <h3>
+      3. Zusatz: Lager mit maximal 15 Transaktionen
+     </h3>
+     <p>
+      Erweitere das Lager aus der Threads-Seite: Startbestand 100, maximal 200 Stück und höchstens 15
+      erfolgreiche Transaktionen. Lieferant und Kunde arbeiten mit jeweils 10 Stück. Verwende die getrennten
+      Methoden liefere() und verkaufe(). Warte bei vollem oder leerem Lager und beende beide Threads nach der
+      15. Transaktion.
+     </p>
+     <div class="task-actions">
+      <button onclick="toggleSolution('hint-3')">
+       Hinweis anzeigen
+      </button>
+      <button onclick="toggleSolution('solution-3')">
+       Lösung anzeigen
+      </button>
+     </div>
+     <div class="solution" id="hint-3">
+      <p>
+       Synchronisiere beide Methoden auf demselben Lagerobjekt. Prüfe Bestand und Transaktionsgrenze innerhalb
+       des Monitors. Verwende while mit wait() und wecke nach jeder erfolgreichen Transaktion alle Wartenden
+       mit notifyAll().
+      </p>
+     </div>
+     <div class="solution" id="solution-3">
+      <pre class="copyable">public class Main {
+    static class Lager {
+        private int bestand = 100;
+        private int transaktionen = 0;
+        private static final int MAX_BESTAND = 200;
+        private static final int MAX_TRANSAKTIONEN = 15;
+
+        public synchronized boolean istOffen() {
+            return transaktionen &lt; MAX_TRANSAKTIONEN;
+        }
+
+        public synchronized boolean liefere(int anzahl) throws InterruptedException {
+            if (anzahl &lt;= 0 || anzahl &gt; MAX_BESTAND) {
+                throw new IllegalArgumentException();
+            }
+
+            while (istOffen() &amp;&amp; bestand &gt; MAX_BESTAND - anzahl) {
+                wait();
+            }
+
+            if (!istOffen()) {
+                return false;
+            }
+
+            bestand += anzahl;
+            transaktionen++;
+            System.out.println("Lieferung: " + bestand + " / " + transaktionen);
+            notifyAll();
+            return true;
+        }
+
+        public synchronized boolean verkaufe(int anzahl) throws InterruptedException {
+            if (anzahl &lt;= 0 || anzahl &gt; MAX_BESTAND) {
+                throw new IllegalArgumentException();
+            }
+
+            while (istOffen() &amp;&amp; bestand &lt; anzahl) {
+                wait();
+            }
+
+            if (!istOffen()) {
+                return false;
+            }
+
+            bestand -= anzahl;
+            transaktionen++;
+            System.out.println("Verkauf: " + bestand + " / " + transaktionen);
+            notifyAll();
+            return true;
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Lager lager = new Lager();
+
+        Thread produzent = new Thread(() -&gt; {
+            try {
+                while (lager.liefere(10)) {
+                    // Weiter liefern, solange das Lager offen ist.
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        Thread konsument = new Thread(() -&gt; {
+            try {
+                while (lager.verkaufe(10)) {
+                    // Weiter verkaufen, solange das Lager offen ist.
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        produzent.start();
+        konsument.start();
+
+        produzent.join();
+        konsument.join();
+
+        System.out.println("Bestand: " + lager.bestand);
+        System.out.println("Transaktionen: " + lager.transaktionen); // 15
+    }
+}</pre>
+      <h4>
+       Warum funktioniert diese Lösung?
+      </h4>
+      <p>
+       Beide Threads verwenden dasselbe Lagerobjekt. Die synchronisierten Instanzmethoden erwerben dessen
+       Monitor (this). Solange ein Thread eine Transaktion ausführt, kann der andere keine der
+       synchronisierten Methoden auf diesem Objekt ausführen. Die Prüfung, Bestandsänderung und Erhöhung des
+       Transaktionszählers sind damit gegenüber dem anderen Thread geschützt.
+      </p>
+      <h4>
+       Warum wird istOffen() innerhalb der Methoden geprüft?
+      </h4>
+      <p>
+       Bei 14 Transaktionen könnten beide Threads außerhalb der Methoden feststellen, dass das Lager offen
+       ist. Erst innerhalb des gemeinsamen Monitors ist die Prüfung zusammen mit der Änderung geschützt. Der
+       erste Thread erhöht auf 15; der zweite erhält danach false und verändert nichts mehr. Der Aufruf der
+       ebenfalls synchronisierten Methode istOffen() ist erlaubt, weil ein Thread denselben Monitor erneut
+       erwerben darf (reentrant).
+      </p>
+      <h4>
+       Warum wait() und notifyAll()?
+      </h4>
+      <p>
+       Bei Bestand 0 kann der Konsument keine 10 Stück verkaufen. Er ruft wait() auf und gibt den Monitor
+       frei. Der Produzent kann nun liefern, den Bestand erhöhen und notifyAll() aufrufen. Der Konsument kann
+       erst nach Freigabe des Monitors weiterarbeiten und prüft die Bedingung erneut. Bei vollem Lager wartet
+       entsprechend der Produzent auf einen Verkauf.
+      </p>
+      <p>
+       Die while-Schleife ist wichtig: Ein geweckter Thread muss den Monitor erneut erwerben. Inzwischen kann
+       ein anderer Thread den Bestand verändert haben. Außerdem kann wait() ohne Signal zurückkehren. Nach dem
+       Warten wird auch die Schließung erneut geprüft.
+      </p>
+      <h4>
+       Was passiert bei der 15. Transaktion?
+      </h4>
+      <p>
+       Der ausführende Thread erhöht den Zähler auf 15 und ruft notifyAll() auf. Auch ein wartender Thread
+       wird geweckt und erkennt, dass das Lager geschlossen ist. Beide Schleifen in main enden, sobald ihre
+       Methode false liefert. Die letzte erfolgreiche Transaktion liefert noch true; der nächste Aufruf
+       liefert false.
+      </p>
+      <h4>
+       Welches Ergebnis ist garantiert?
+      </h4>
+      <p>
+       Bei diesem Test mit zwei Threads, Startbestand 100 und jeweils 10 Stück pro Transaktion sind genau 15
+       erfolgreiche Transaktionen möglich, sofern beide Threads normal weiterlaufen. Der Bestand bleibt
+       zwischen 0 und 200. Die Reihenfolge der Lieferungen und Verkäufe und der Endbestand sind nicht
+       festgelegt. join() wartet auf beide Threads und macht ihre Änderungen für main sichtbar.
+      </p>
+      <p>
+       Bei anderen Mengen, einem vorzeitigen Abbruch oder einem unterbrochenen Thread kann ein zusätzliches
+       Schließsignal erforderlich sein, damit kein Thread dauerhaft wartet. Dieses Beispiel behandelt den
+       normalen Ablauf ohne Unterbrechung.
+      </p>
+     </div>
+    </article>
+   </section>
+  </main>
+  <script src="script.js">
+  </script>
+ </body>
+</html>
