@@ -1,1 +1,302 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Java I/O-Streams · POS</title><link rel="stylesheet" href="style.css"></head><body><header><h1>Java I/O-Streams</h1><p>Bytes, Zeichen und binäre Dateien lesen und schreiben</p></header><nav><a href="index.html">Start</a><a href="files.html">Path &amp; Files</a><a href="#bytes">Byte-Streams</a><a href="#filter">Filter</a><a href="#text">Text</a><a href="#encoding">Encoding</a><a href="#random">RandomAccessFile</a><a href="#uebungen">Übungen</a></nav><main>
+<section class="intro"><h2>Was ist ein I/O-Stream?</h2><p>Ein Stream transportiert Daten sequentiell von einer Quelle zu einem Ziel, etwa einer Datei, einem Array oder einer Netzwerkverbindung. Input bedeutet Lesen, Output bedeutet Schreiben. I/O-Streams aus java.io sind nicht dasselbe wie die Stream API für Collections.</p><p><strong>Datenquelle → InputStream → Java-Programm → OutputStream → Datensenke</strong></p><p>Byte-Streams transportieren Bytes (Binärdaten), Character-Streams UTF-16-Codeeinheiten (Text). Die Beispiele verwenden Java 21.</p></section>
+<section class="card" id="bytes"><h2>Byte-Streams und Low-Level-Streams</h2>
+<p>InputStream und OutputStream sind abstrakte Basisklassen. FileInputStream und FileOutputStream greifen direkt auf Dateien zu; ByteArrayInputStream und ByteArrayOutputStream arbeiten im Speicher. PipedInputStream und PipedOutputStream verbinden zwei Streams.</p><p>Die folgenden Ausschnitte können in einer main-Methode mit throws IOException ausgeführt werden:</p>
+<pre class="copyable">import java.io.*;
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.zip.*;
 
+public class Main {
+    public static void main(String[] args) throws IOException {
+        // Beispiel hier einfügen
+    }
+}</pre>
+<h3>Einzelne Bytes schreiben und lesen</h3>
+<pre class="copyable">try (OutputStream out = new FileOutputStream(&quot;data.bin&quot;)) {
+    out.write(65);
+    out.write(255);
+    out.write(0x12345678); // nur 0x78 = 120
+}
+try (InputStream in = new FileInputStream(&quot;data.bin&quot;)) {
+    int b;
+    while ((b = in.read()) != -1) {
+        System.out.println(b); // 65, 255, 120
+    }
+}</pre>
+<p>read() liefert einen int von 0 bis 255 oder -1 am Ende. write(int) schreibt nur die niedrigsten 8 Bits. try-with-resources schließt die Ressourcen auch bei Exceptions. FileOutputStream überschreibt standardmäßig eine vorhandene Datei; mit true als zweitem Konstruktorparameter hängt er Daten an.</p><h3>Blockweise kopieren</h3>
+<pre class="copyable">try (InputStream in = new FileInputStream(&quot;data.bin&quot;);
+     OutputStream out = new FileOutputStream(&quot;copy.bin&quot;)) {
+    byte[] buffer = new byte[4096];
+    int n;
+    while ((n = in.read(buffer)) != -1) {
+        out.write(buffer, 0, n);
+    }
+}</pre>
+<p>read(buffer) liefert die tatsächlich gelesene Anzahl, nicht unbedingt die Arraylänge. Deshalb nur n Bytes schreiben. skip(n) überspringt bis zu n Bytes; available() ist keine zuverlässige Dateigröße und kein EOF-Test. flush() gibt gepufferte Daten weiter, garantiert aber keine physische Speicherung. mark(), reset() und markSupported() erlauben bei unterstützten Streams das Zurückspringen zu einer Marke.</p><h3>Streams im Speicher</h3>
+<pre class="copyable">ByteArrayOutputStream out = new ByteArrayOutputStream();
+out.write(new byte[] {65, 66, 67});
+byte[] bytes = out.toByteArray();
+try (InputStream in = new ByteArrayInputStream(bytes)) {
+    System.out.println(in.read()); // 65
+}</pre>
+</section>
+<section class="card" id="filter"><h2>Filter-Streams und Decorator Pattern</h2>
+<p>Filter-Streams umwickeln andere Streams und ergänzen Funktionen wie Pufferung oder das Lesen primitiver Datentypen. Das Decorator Pattern nutzt Komposition: Ein Wrapper enthält eine Referenz auf einen anderen Stream. InputStream ist die Component, FileInputStream eine ConcreteComponent, FilterInputStream der Decorator und BufferedInputStream ein ConcreteDecorator.</p><p>FileInputStream → BufferedInputStream → DataInputStream → Programm</p>
+<pre class="copyable">try (DataOutputStream out = new DataOutputStream(
+        new BufferedOutputStream(new FileOutputStream(&quot;values.bin&quot;)))) {
+    out.writeInt(42);       // 4 Bytes
+    out.writeDouble(3.14);  // 8 Bytes
+    out.writeUTF(&quot;Hallo&quot;); // 2 Bytes Längenfeld + 5 Bytes
+}
+try (DataInputStream in = new DataInputStream(
+        new BufferedInputStream(new FileInputStream(&quot;values.bin&quot;)))) {
+    System.out.println(in.readInt());    // 42
+    System.out.println(in.readDouble()); // 3.14
+    System.out.println(in.readUTF());    // Hallo
+}</pre>
+<p>Die Reihenfolge und Datentypen müssen beim Lesen und Schreiben übereinstimmen. DataInputStream und DataOutputStream implementieren DataInput und DataOutput. readInt(), readDouble() und readUTF() werfen bei unvollständigen Daten EOFException. writeUTF verwendet Modified UTF-8, nicht gewöhnliches UTF-8. Die numerischen Werte werden Big Endian gespeichert.</p><h3>PrintStream</h3>
+<pre class="copyable">try (PrintStream out = new PrintStream(&quot;output.txt&quot;, StandardCharsets.UTF_8)) {
+    out.println(&quot;Hallo&quot;);
+    out.println(42); // Text, nicht binärer int
+    System.out.println(out.checkError());
+}</pre>
+<p>System.out ist ein PrintStream. PrintStream meldet Schreibfehler über checkError() statt über IOException bei print/println. BufferedInputStream unterstützt mark/reset; beim Schließen des äußeren Streams werden die darunterliegenden Streams geschlossen.</p>
+</section>
+<section class="card" id="text"><h2>Character-Streams: Reader und Writer</h2>
+<p>Reader und Writer verarbeiten char-Werte (16 Bit). FileReader und FileWriter arbeiten mit Dateien; StringReader und StringWriter mit Strings. BufferedReader und BufferedWriter puffern Daten und bieten readLine() bzw. newLine().</p>
+<pre class="copyable">try (Writer writer = new FileWriter(&quot;text.txt&quot;, StandardCharsets.UTF_8)) {
+    writer.write(&quot;Hallo Welt!&quot;);
+}
+try (Reader reader = new FileReader(&quot;text.txt&quot;, StandardCharsets.UTF_8)) {
+    int c;
+    while ((c = reader.read()) != -1) {
+        System.out.print((char) c);
+    }
+}</pre>
+<p>Reader.read() liefert 0 bis 65535 oder -1. Writer.write(int) schreibt nur die niedrigsten 16 Bits. Beide unterstützen Arrays mit Offset und Länge. ready() sagt, ob der nächste Lesevorgang nicht blockiert, nicht ob EOF erreicht ist.</p><h3>Zeilenweise mit Files</h3>
+<pre class="copyable">Path path = Path.of(&quot;text.txt&quot;);
+try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+    writer.write(&quot;Erste Zeile&quot;);
+    writer.newLine();
+    writer.write(&quot;Zweite Zeile&quot;);
+}
+try (BufferedReader reader = Files.newBufferedReader(path)) {
+    String line;
+    while ((line = reader.readLine()) != null) {
+        System.out.println(line);
+    }
+}</pre>
+<p>readLine() liefert null am Ende, eine leere Zeile dagegen als leeren String. Files.newBufferedReader und newBufferedWriter verwenden standardmäßig UTF-8. Files.readAllLines lädt alle Zeilen in den RAM. Für große Dateien ist zeilenweises Lesen sinnvoll. Mit CREATE und APPEND kann man Text anhängen:</p>
+<pre class="copyable">try (BufferedWriter writer = Files.newBufferedWriter(Path.of(&quot;log.txt&quot;),
+        StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+    writer.write(&quot;Neuer Eintrag&quot;);
+    writer.newLine();
+}</pre>
+</section>
+<section class="card" id="encoding"><h2>Zeichensätze und Encoding</h2>
+<p>ASCII umfasst 128 Zeichen. ISO-8859-1 und ISO-8859-2 erweitern den Zeichenvorrat für unterschiedliche Sprachen. Unicode ordnet Zeichen Codepoints zu; UTF-8 und UTF-16 definieren deren Kodierung. Java-Strings verwenden logisch UTF-16-Codeeinheiten. Ein Emoji kann zwei char-Werte benötigen.</p><table><thead><tr><th>Zeichen</th><th>Codepoint</th><th>UTF-8</th><th>UTF-16</th></tr></thead><tbody><tr><td>b</td><td>U+0062</td><td>1 Byte</td><td>2 Bytes</td></tr><tr><td>ö</td><td>U+00F6</td><td>2 Bytes</td><td>2 Bytes</td></tr><tr><td>美</td><td>U+7F8E</td><td>3 Bytes</td><td>2 Bytes</td></tr><tr><td>😊</td><td>U+1F60A</td><td>4 Bytes</td><td>4 Bytes</td></tr></tbody></table><p>Bei UTF-16 und UTF-32 ist die Byte-Reihenfolge relevant. Big Endian speichert das höchstwertige Byte zuerst, Little Endian das niedrigstwertige. Ein BOM kann die Reihenfolge kennzeichnen (UTF-16 BE: FE FF, LE: FF FE). UTF-8 benötigt kein BOM.</p><h3>Bytes in Zeichen umwandeln</h3>
+<pre class="copyable">try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(new FileInputStream(&quot;text.txt&quot;),
+                StandardCharsets.UTF_8))) {
+    System.out.println(reader.readLine());
+}
+try (Writer writer = new OutputStreamWriter(
+        new FileOutputStream(&quot;encoded.txt&quot;), StandardCharsets.UTF_8)) {
+    writer.write(&quot;Grüße 😊&quot;);
+}</pre>
+<p>InputStreamReader dekodiert Bytes, OutputStreamWriter kodiert Zeichen. Das Charset muss zum Dateiformat passen. Seit Java 18 ist UTF-8 grundsätzlich das Standardcharset; explizite Angabe macht das Format eindeutig.</p>
+</section>
+<section class="card" id="random"><h2>RandomAccessFile</h2>
+<p>RandomAccessFile erlaubt Lesen und Schreiben an beliebigen Bytepositionen. r öffnet nur zum Lesen, rw zum Lesen und Schreiben (erstellt bei Bedarf). rws synchronisiert Inhalt und Metadaten, rwd den Inhalt. seek(position) setzt den Dateizeiger, getFilePointer() liefert die aktuelle Position, length() die Dateilänge. setLength(0) leert eine vorhandene Datei.</p>
+<pre class="copyable">try (RandomAccessFile file = new RandomAccessFile(&quot;ints.bin&quot;, &quot;rw&quot;)) {
+    file.setLength(0);
+    file.writeInt(10);
+    file.writeInt(20);
+    file.writeInt(30);
+    System.out.println(file.length()); // 12
+    file.seek(4);
+    System.out.println(file.readInt()); // 20
+    System.out.println(file.getFilePointer()); // 8
+    file.seek(4);
+    file.writeInt(99); // zweiten Wert überschreiben
+}</pre>
+<p>Bei Datensätzen fixer Länge gilt: Position = Index × Datensatzlänge (Index beginnt bei 0). Beispiel: 4 Bytes Katalognummer, je 15 char für Vor- und Zuname (je 30 Bytes), 1 Byte Geschlecht ergeben 65 Bytes. Bei einem Header muss dessen Länge zusätzlich berücksichtigt werden.</p><h3>Arbeiten mit byte[]</h3>
+<pre class="copyable">byte b = (byte) 255;
+System.out.println(b); // -1
+System.out.println(Byte.toUnsignedInt(b)); // 255
+byte[] data = ByteBuffer.allocate(4).putInt(42).array();
+System.out.println(ByteBuffer.wrap(data).getInt()); // 42
+try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(data))) {
+    System.out.println(in.readInt()); // 42
+}</pre>
+<p>Java-byte ist signed (-128 bis 127). ByteBuffer interpretiert binäre Daten standardmäßig Big Endian. Die Textbytes von "42" sind nicht die binäre Darstellung des int 42.</p>
+</section>
+<section class="card" id="uebungen"><h2>Übungen</h2>
+<article><h3>1. CheckInt</h3><p>Eine Binärdatei enthält einen Kontrollinteger und anschließend ausschließlich doubles. Implementiere mit RandomAccessFile die Methoden createFile(String filename, double... values), isValidFile(String filename), getFileInfo(String filename) und append(String filename, double toAppend), jeweils mit throws IOException. Der Kontrollinteger muss der Anzahl der Doublewerte entsprechen. getFileInfo liefert beispielsweise:</p><pre class="copyable">Saved values: 5
+1,20 7,80 3,50 6,80 4,50</pre><p>append hängt einen Wert an und erhöht den Kontrollinteger.</p><div class="task-actions"><button onclick="toggleSolution('hint-1')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-1')">Lösung anzeigen</button></div><div class="solution" id="hint-1"><p>Ein int benötigt 4 Bytes, ein double 8. Prüfe die Länge gegen 4 + 8L * count. Mit seek(0) kannst du den Header aktualisieren.</p></div><div class="solution" id="solution-1">
+<pre class="copyable">import java.io.*;
+import java.util.*;
+
+public class CheckInt {
+    public static void createFile(String filename, double... values) throws IOException {
+        try (RandomAccessFile f = new RandomAccessFile(filename, &quot;rw&quot;)) {
+            f.setLength(0);
+            f.writeInt(values.length);
+            for (double value : values) f.writeDouble(value);
+        }
+    }
+    private static boolean valid(RandomAccessFile f) throws IOException {
+        if (f.length() &lt; 4) return false;
+        f.seek(0);
+        int count = f.readInt();
+        return count &gt;= 0 &amp;&amp; f.length() == 4 + 8L * count;
+    }
+    public static boolean isValidFile(String filename) throws IOException {
+        try (RandomAccessFile f = new RandomAccessFile(filename, &quot;r&quot;)) {
+            return valid(f);
+        }
+    }
+    public static String getFileInfo(String filename) throws IOException {
+        try (RandomAccessFile f = new RandomAccessFile(filename, &quot;r&quot;)) {
+            if (!valid(f)) throw new IllegalArgumentException(&quot;Ungültige Datei&quot;);
+            f.seek(0);
+            int count = f.readInt();
+            StringBuilder result = new StringBuilder(&quot;Saved values: &quot; + count + &quot;\n&quot;);
+            for (int i = 0; i &lt; count; i++) {
+                if (i &gt; 0) result.append(&#x27; &#x27;);
+                result.append(String.format(Locale.GERMANY, &quot;%.2f&quot;, f.readDouble()));
+            }
+            return result.toString();
+        }
+    }
+    public static void append(String filename, double toAppend) throws IOException {
+        try (RandomAccessFile f = new RandomAccessFile(filename, &quot;rw&quot;)) {
+            if (!valid(f)) throw new IllegalArgumentException(&quot;Ungültige Datei&quot;);
+            f.seek(0);
+            int count = f.readInt();
+            if (count == Integer.MAX_VALUE) throw new IllegalArgumentException(&quot;Zu viele Werte&quot;);
+            f.seek(f.length());
+            f.writeDouble(toAppend);
+            f.seek(0);
+            f.writeInt(count + 1);
+        }
+    }
+    public static void main(String[] args) throws IOException {
+        createFile(&quot;check.bin&quot;, 1.2, 7.8, 3.5, 6.8, 4.5);
+        System.out.println(isValidFile(&quot;check.bin&quot;)); // true
+        System.out.println(getFileInfo(&quot;check.bin&quot;));
+        append(&quot;check.bin&quot;, 9.1);
+        System.out.println(getFileInfo(&quot;check.bin&quot;));
+    }
+}</pre>
+</div></article>
+<article><h3>2. Numbers</h3><p>Die Datei enthält wiederholt ein Typbyte (0 = int, 1 = double) und den zugehörigen Wert. Implementiere getContents(String filename) als List&lt;Number&gt;, groupByType(List&lt;? extends Number&gt; numbers) als Map&lt;String, Set&lt;Number&gt;&gt;, isValidFile(String filename) und createFile(String filename, List&lt;Number&gt; values). Ungültige Formate führen bei getContents zu IllegalArgumentException. Die Gruppen werden nach Subklassennamen gebildet und aufsteigend sortiert, z. B. {Double=[2.71, 3.14], Integer=[42, 100]}.</p><div class="task-actions"><button onclick="toggleSolution('hint-2')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-2')">Lösung anzeigen</button></div><div class="solution" id="hint-2"><p>Lies das Typbyte mit read(): -1 ist reguläres EOF. EOFException beim anschließenden Wert bedeutet dagegen einen unvollständigen Datensatz. Verwende TreeMap und TreeSet.</p></div><div class="solution" id="solution-2">
+<pre class="copyable">import java.io.*;
+import java.util.*;
+
+public class Numbers {
+    public static List&lt;Number&gt; getContents(String filename) throws IOException {
+        List&lt;Number&gt; result = new ArrayList&lt;&gt;();
+        try (DataInputStream in = new DataInputStream(
+                new BufferedInputStream(new FileInputStream(filename)))) {
+            int tag;
+            while ((tag = in.read()) != -1) {
+                try {
+                    if (tag == 0) result.add(in.readInt());
+                    else if (tag == 1) result.add(in.readDouble());
+                    else throw new IllegalArgumentException(&quot;Unbekannter Typ: &quot; + tag);
+                } catch (EOFException e) {
+                    throw new IllegalArgumentException(&quot;Unvollständiger Wert&quot;, e);
+                }
+            }
+        }
+        return result;
+    }
+    public static Map&lt;String, Set&lt;Number&gt;&gt; groupByType(List&lt;? extends Number&gt; numbers) {
+        Map&lt;String, Set&lt;Number&gt;&gt; result = new TreeMap&lt;&gt;();
+        for (Number n : numbers) {
+            result.computeIfAbsent(n.getClass().getSimpleName(),
+                    key -&gt; new TreeSet&lt;&gt;()).add(n);
+        }
+        return result;
+    }
+    public static boolean isValidFile(String filename) throws IOException {
+        try {
+            getContents(filename);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+    public static void createFile(String filename, List&lt;Number&gt; values) throws IOException {
+        for (Number n : values) {
+            if (!(n instanceof Integer) &amp;&amp; !(n instanceof Double))
+                throw new IllegalArgumentException(&quot;Nur Integer und Double erlaubt&quot;);
+        }
+        try (DataOutputStream out = new DataOutputStream(
+                new BufferedOutputStream(new FileOutputStream(filename)))) {
+            for (Number n : values) {
+                if (n instanceof Integer i) {
+                    out.writeByte(0);
+                    out.writeInt(i);
+                } else {
+                    out.writeByte(1);
+                    out.writeDouble(n.doubleValue());
+                }
+            }
+        }
+    }
+    public static void main(String[] args) throws IOException {
+        createFile(&quot;numbers.bin&quot;, List.of(42, 3.14, 100, 2.71));
+        System.out.println(groupByType(getContents(&quot;numbers.bin&quot;)));
+        // {Double=[2.71, 3.14], Integer=[42, 100]}
+    }
+}</pre>
+</div></article>
+<p>Hinweis zur Lösung: TreeSet entfernt Duplikate. Die natürliche Ordnung funktioniert hier, weil jede Gruppe ausschließlich Integer oder ausschließlich Double enthält. Eine leere Datei gilt als gültige leere Sequenz.</p>
+<article><h3>3. DecoratorPattern</h3><p>Entpacke eine GZIP-Datei (example.gz) und gib den Inhalt in Großbuchstaben aus. Verwende die vorgegebene Kette: FileInputStream → GZIPInputStream → BufferedInputStream → UpperCaseFilterInputStream. Implementiere UpperCaseFilterInputStream selbst.</p><p>Für diese Byte-Filter-Übung beschränken wir die Umwandlung auf ASCII-Buchstaben a–z. Für beliebigen Unicode-Text wäre ein Reader mit passender Dekodierung nötig.</p><div class="task-actions"><button onclick="toggleSolution('hint-3')">Hinweis anzeigen</button><button onclick="toggleSolution('solution-3')">Lösung anzeigen</button></div><div class="solution" id="hint-3"><p>Erweitere FilterInputStream. Überschreibe read() und read(byte[], int, int), damit auch blockweises Lesen umgewandelt wird. EOF muss -1 bleiben.</p></div><div class="solution" id="solution-3">
+<pre class="copyable">import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.*;
+
+public class DecoratorPattern {
+    static class UpperCaseFilterInputStream extends FilterInputStream {
+        UpperCaseFilterInputStream(InputStream in) {
+            super(in);
+        }
+        private int upper(int b) {
+            return b &gt;= &#x27;a&#x27; &amp;&amp; b &lt;= &#x27;z&#x27; ? b - &#x27;a&#x27; + &#x27;A&#x27; : b;
+        }
+        @Override
+        public int read() throws IOException {
+            return upper(in.read());
+        }
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int n = in.read(b, off, len);
+            for (int i = off; i &lt; off + n; i++) {
+                b[i] = (byte) upper(Byte.toUnsignedInt(b[i]));
+            }
+            return n;
+        }
+    }
+    public static void main(String[] args) throws IOException {
+        // Testdatei erstellen
+        try (OutputStream out = new GZIPOutputStream(
+                new FileOutputStream(&quot;example.gz&quot;))) {
+            out.write(&quot;Hallo Welt!&quot;.getBytes(StandardCharsets.UTF_8));
+        }
+        try (InputStream file = new FileInputStream(&quot;example.gz&quot;);
+             InputStream gzip = new GZIPInputStream(file);
+             InputStream buffered = new BufferedInputStream(gzip);
+             InputStream upper = new UpperCaseFilterInputStream(buffered)) {
+            upper.transferTo(System.out); // HALLO WELT!
+        }
+    }
+}</pre>
+</div></article>
+</section>
+</main><script src="script.js"></script></body></html>
