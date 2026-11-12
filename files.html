@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Java Path &amp; Files · POS</title><link href="style.css" rel="stylesheet"/></head><body>
+<header><h1>Java Path &amp; Files</h1><p>Pfade, Dateien und Verzeichnisse mit Java bearbeiten</p></header>
+<nav><a href="index.html">Start</a><a href="#grundlagen">Grundlagen</a><a href="#pfade">Pfade</a><a href="#attribute">Attribute</a><a href="#operationen">Operationen</a><a href="#inhalt">Dateiinhalt</a><a href="#suche">Suche</a><a href="#visitor">FileVisitor</a><a href="#uebungen">Übungen</a></nav><main>
+<section class="intro" id="start"><h2>Was sind Path und Files?</h2><p>Mit <code>Path</code> und <code>Files</code> aus <code>java.nio.file</code> kannst du Dateien und Verzeichnisse unabhängig vom Betriebssystem bearbeiten. Ein Path beschreibt einen Pfad; Files führt Operationen im Dateisystem aus.</p>
+<pre class="copyable">Path path = Path.of(&quot;example.txt&quot;);
+System.out.println(Files.exists(path));</pre>
+<p>Das Erzeugen eines Path-Objekts legt noch keine Datei an. Die Beispiele verwenden Java 21.</p></section>
+<section class="card" id="grundlagen"><h2>File, Path und Files</h2>
+<p><code>java.io.File</code> ist die ältere API und nicht deprecated. <code>Path</code> ist ein Interface; <code>Paths</code> ist eine Hilfsklasse. Heute bevorzugen wir <code>Path.of()</code> und die statischen Methoden von <code>Files</code>. Diese bieten unter anderem detaillierte Exceptions, Dateiattribute und Unterstützung für symbolische Links.</p>
+<pre class="copyable">File file = new File(&quot;example.txt&quot;);
+Path path = file.toPath();
+File oldFile = path.toFile();</pre>
+<h3>Imports und IOException</h3><p>Viele Dateioperationen können eine IOException auslösen, etwa bei fehlenden Dateien oder fehlenden Zugriffsrechten. Für die folgenden Ausschnitte kannst du diese main-Methode verwenden.</p>
+<pre class="copyable">import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        // Beispiel hier einfügen
+    }
+}</pre>
+</section>
+<section class="card" id="pfade"><h2>Pfade erstellen und bearbeiten</h2>
+<p>Relative Pfade beziehen sich auf das Arbeitsverzeichnis des Programms. Absolute Pfade beginnen an einer Wurzel. Unter Windows ist beispielsweise C:/ ein Laufwerkswurzelpfad. Verwende einzelne Pfadsegmente für portable Beispiele.</p>
+<pre class="copyable">Path path = Path.of(&quot;src&quot;, &quot;main&quot;, &quot;java&quot;, &quot;Main.java&quot;);
+Path same = Path.of(&quot;src/main/java&quot;).resolve(&quot;Main.java&quot;);
+System.out.println(path.toAbsolutePath());
+System.out.println(path.getRoot());      // null (relativ)
+System.out.println(path.getParent());    // src/main/java
+System.out.println(path.getFileName());  // Main.java
+System.out.println(path.getName(0));     // src
+System.out.println(path.getNameCount()); // 4
+System.out.println(path.subpath(1, 3));  // main/java
+System.out.println(path.startsWith(&quot;src&quot;)); // true
+System.out.println(path.endsWith(&quot;Main.java&quot;)); // true</pre>
+<p>Die Ausgabe der Trennzeichen hängt vom Betriebssystem ab. <code>subpath</code> schließt den Endindex aus. <code>startsWith</code> und <code>endsWith</code> vergleichen vollständige Pfadsegmente.</p>
+<pre class="copyable">Path src = Path.of(&quot;src/main&quot;);
+Path java = src.resolve(&quot;java/at/htlstp&quot;);
+System.out.println(src.relativize(java)); // java/at/htlstp
+System.out.println(java.relativize(src)); // ../../..
+System.out.println(Path.of(&quot;src/../data&quot;).normalize()); // data</pre>
+<p>relativize berechnet den Weg vom ersten zum zweiten Pfad. Beide müssen kompatibel sein (z. B. beide relativ). resolve liefert bei einem absoluten zweiten Pfad diesen zurück. normalize entfernt überflüssige Pfadsegmente, ohne das Dateisystem zu prüfen.</p>
+</section>
+<section class="card" id="attribute"><h2>Existenz und Dateieigenschaften</h2>
+<pre class="copyable">Path path = Path.of(&quot;example.txt&quot;);
+if (Files.exists(path)) {
+    System.out.println(Files.isRegularFile(path));
+    System.out.println(Files.isDirectory(path));
+    System.out.println(Files.isReadable(path));
+    System.out.println(Files.isWritable(path));
+    System.out.println(Files.isExecutable(path));
+    System.out.println(Files.getLastModifiedTime(path));
+    if (Files.isRegularFile(path)) {
+        System.out.println(Files.size(path) + &quot; Bytes&quot;);
+    }
+}</pre>
+<p>Files.exists kann auch false liefern, wenn die Existenz nicht ermittelt werden kann. Die Größe einer regulären Datei wird in Bytes angegeben.</p>
+<pre class="copyable">BasicFileAttributes attr = Files.readAttributes(
+        Path.of(&quot;example.txt&quot;), BasicFileAttributes.class);
+System.out.println(attr.size());
+System.out.println(attr.creationTime());
+System.out.println(attr.lastModifiedTime());</pre>
+<h3>Dateien vergleichen</h3><p>isSameFile prüft, ob zwei Pfade dieselbe Datei bezeichnen. mismatch vergleicht den Inhalt: -1 bedeutet identisch, sonst wird der Index des ersten unterschiedlichen Bytes geliefert. getOwner liefert den Besitzer, sofern unterstützt.</p>
+<pre class="copyable">Path a = Path.of(&quot;example.txt&quot;);
+Path b = Path.of(&quot;copy.txt&quot;);
+System.out.println(Files.isSameFile(a, b));
+System.out.println(Files.mismatch(a, b));
+System.out.println(Files.getOwner(a).getName());</pre>
+</section>
+<section class="card" id="operationen"><h2>Dateien und Verzeichnisse erstellen, kopieren, verschieben und löschen</h2>
+<p>Verwende für dieses Beispiel ein leeres Übungsverzeichnis. createDirectories erzeugt auch fehlende Elternverzeichnisse; createFile erzeugt eine leere Datei und schlägt fehl, wenn sie bereits existiert.</p>
+<pre class="copyable">Path dir = Files.createDirectories(Path.of(&quot;demo&quot;));
+Path file = Files.createFile(dir.resolve(&quot;test.txt&quot;));
+Path copy = Files.copy(file, dir.resolve(&quot;copy.txt&quot;));
+Path moved = Files.move(copy, dir.resolve(&quot;moved.txt&quot;));
+Files.delete(moved);
+Files.delete(file);
+Files.delete(dir);</pre>
+<p>copy und move überschreiben standardmäßig keine vorhandenen Ziele. Mit StandardCopyOption.REPLACE_EXISTING erlaubst du das Überschreiben. copy kopiert ein Verzeichnis ohne Inhalt; move verschiebt ein Verzeichnis normalerweise samt Inhalt, sofern das Dateisystem dies unterstützt. Bei einem Wechsel des Dateisystems kann ein nicht leeres Verzeichnis nicht ohne Weiteres verschoben werden. COPY_ATTRIBUTES übernimmt unterstützte Attribute beim Kopieren; ATOMIC_MOVE fordert eine atomare Verschiebung an. delete löscht nur leere Verzeichnisse; deleteIfExists liefert false, wenn der Eintrag fehlt.</p><h3>Temporäre Dateien</h3>
+<pre class="copyable">Path temp = Files.createTempFile(&quot;pos-&quot;, &quot;.txt&quot;);
+Path tempDir = Files.createTempDirectory(&quot;pos-&quot;);
+System.out.println(temp);
+Files.delete(temp);
+Files.delete(tempDir);</pre>
+<p>Temporäre Dateien werden nicht automatisch beim Programmende gelöscht. Ohne explizites Verzeichnis wird das Standard-Temp-Verzeichnis verwendet.</p>
+</section>
+<section class="card" id="inhalt"><h2>Textdateien lesen und schreiben</h2>
+<pre class="copyable">Path path = Path.of(&quot;example.txt&quot;);
+Files.writeString(path, &quot;Hallo Java!\nZweite Zeile&quot;);
+String text = Files.readString(path);
+List&lt;String&gt; lines = Files.readAllLines(path);
+System.out.println(text);
+lines.forEach(System.out::println);</pre>
+<p>readAllLines liefert eine Liste mit einer Zeichenkette pro Zeile. readString liest den gesamten Text. Beide verwenden standardmäßig UTF-8. writeString erstellt die Datei oder überschreibt ihren Inhalt. Für große Dateien eignet sich Files.lines mit try-with-resources.</p>
+<pre class="copyable">try (Stream&lt;String&gt; lines = Files.lines(Path.of(&quot;example.txt&quot;))) {
+    lines.forEach(System.out::println);
+}</pre>
+</section>
+<section class="card" id="suche"><h2>Verzeichnisse durchsuchen</h2>
+<p>Files.list liefert die direkten Einträge, Files.walk durchsucht auch Unterverzeichnisse und enthält den Startpfad. Beide liefern einen Stream, der geschlossen werden muss.</p>
+<pre class="copyable">Path dir = Path.of(&quot;.&quot;);
+try (Stream&lt;Path&gt; paths = Files.list(dir)) {
+    paths.forEach(System.out::println);
+}
+try (Stream&lt;Path&gt; paths = Files.walk(dir)) {
+    paths.filter(Files::isRegularFile)
+         .forEach(System.out::println);
+}</pre>
+<h3>Glob-Muster</h3><p>Ein Glob ist ein Suchmuster für Pfade: * steht für beliebig viele Zeichen innerhalb eines Segments, ** kann Verzeichnisgrenzen überschreiten, ? steht für ein Zeichen, [0-9] für eine Ziffer und {java,xml} für Alternativen.</p>
+<pre class="copyable">PathMatcher matcher = FileSystems.getDefault()
+        .getPathMatcher(&quot;glob:*.{java,xml,pdf}&quot;);
+try (Stream&lt;Path&gt; paths = Files.walk(Path.of(&quot;.&quot;))) {
+    paths.filter(Files::isRegularFile)
+         .filter(p -&gt; matcher.matches(p.getFileName()))
+         .forEach(System.out::println);
+}</pre>
+<p>Der Vergleich mit getFileName prüft nur den Dateinamen, unabhängig von der Verzeichnistiefe. Ein PathMatcher kann auch regex-Muster verwenden.</p><h3>Files.find</h3><p>find prüft Pfad und Dateiattribute mit einem BiPredicate. Die maximale Tiefe 0 umfasst nur den Startpfad.</p>
+<pre class="copyable">try (Stream&lt;Path&gt; paths = Files.find(Path.of(&quot;.&quot;), 5,
+        (p, attr) -&gt; attr.isRegularFile()
+                &amp;&amp; p.getFileName().toString().endsWith(&quot;.java&quot;))) {
+    paths.forEach(System.out::println);
+}</pre>
+</section>
+<section class="card" id="visitor"><h2>FileVisitor und walkFileTree</h2>
+<p>FileVisitor&lt;Path&gt; ermöglicht es, bei der rekursiven Suche auf einzelne Ereignisse zu reagieren. Die vier Methoden liefern FileVisitResult.</p><ul><li>preVisitDirectory: vor dem Betreten des Verzeichnisses</li><li>visitFile: beim Besuch einer Datei</li><li>visitFileFailed: wenn ein Eintrag nicht besucht werden kann</li><li>postVisitDirectory: nach der Verarbeitung des Verzeichnisses</li></ul><p>CONTINUE setzt die Suche fort, SKIP_SUBTREE überspringt bei preVisitDirectory den Inhalt, SKIP_SIBLINGS überspringt weitere Geschwister, TERMINATE beendet die Suche. SimpleFileVisitor bietet Standardimplementierungen; Fehler werden standardmäßig weitergeworfen.</p>
+<pre class="copyable">Files.walkFileTree(Path.of(&quot;.&quot;), new SimpleFileVisitor&lt;Path&gt;() {
+    @Override
+    public FileVisitResult visitFile(Path file,
+            BasicFileAttributes attrs) {
+        System.out.println(file);
+        return FileVisitResult.CONTINUE;
+    }
+});</pre>
+</section>
+<section class="card" id="uebungen"><h2>Übungen</h2>
+<p>Die folgenden vier Aufgaben stammen aus dem Übungsblatt. Verwende ein eigenes Übungsverzeichnis und passe die Pfade an. Die Lösungen sind mögliche Umsetzungen.</p>
+<article><h3>1. Einen Pfad erstellen und Dateieigenschaften ausgeben</h3><ul><li>Erstelle einen Pfad zu example.txt.</li><li>Prüfe, ob die Datei existiert.</li><li>Gib die Dateigröße aus, falls eine reguläre Datei existiert.</li><li>Prüfe, ob es sich um eine Datei oder ein Verzeichnis handelt.</li></ul><div class="task-actions"><button onclick="toggleSolution('files-hint-1')">Hinweis anzeigen</button><button onclick="toggleSolution('files-solution-1')">Lösung anzeigen</button></div><div class="solution" id="files-hint-1"><p>Verwende Path.of, Files.exists, Files.size, Files.isRegularFile und Files.isDirectory.</p></div><div class="solution" id="files-solution-1">
+<pre class="copyable">Path path = Path.of(&quot;example.txt&quot;);
+System.out.println(&quot;Existiert: &quot; + Files.exists(path));
+if (Files.exists(path)) {
+    System.out.println(&quot;Datei: &quot; + Files.isRegularFile(path));
+    System.out.println(&quot;Verzeichnis: &quot; + Files.isDirectory(path));
+    if (Files.isRegularFile(path)) {
+        System.out.println(&quot;Größe: &quot; + Files.size(path));
+    }
+}</pre>
+</div></article>
+<article><h3>2. Verzeichnisse und Dateien erstellen</h3><ul><li>Erstelle TestDir und darin test.txt.</li><li>Gib Größe, Erstellungszeit und letzte Modifikation aus.</li><li>Verschiebe test.txt nach NewDir und überprüfe den Erfolg.</li><li>Lösche die erstellte Datei und beide Verzeichnisse und überprüfe den Erfolg.</li></ul><p>TestDir und NewDir dürfen für diese Lösung noch nicht existieren.</p><div class="task-actions"><button onclick="toggleSolution('files-hint-2')">Hinweis anzeigen</button><button onclick="toggleSolution('files-solution-2')">Lösung anzeigen</button></div><div class="solution" id="files-hint-2"><p>Nutze createDirectory, createFile, readAttributes, move und delete. Lösche zuerst die Datei, dann die Verzeichnisse.</p></div><div class="solution" id="files-solution-2">
+<pre class="copyable">Path testDir = Files.createDirectory(Path.of(&quot;TestDir&quot;));
+Path file = Files.createFile(testDir.resolve(&quot;test.txt&quot;));
+BasicFileAttributes attr = Files.readAttributes(
+        file, BasicFileAttributes.class);
+System.out.println(&quot;Größe: &quot; + attr.size());
+System.out.println(&quot;Erstellt: &quot; + attr.creationTime());
+System.out.println(&quot;Geändert: &quot; + attr.lastModifiedTime());
+Path newDir = Files.createDirectory(Path.of(&quot;NewDir&quot;));
+Path target = Files.move(file, newDir.resolve(&quot;test.txt&quot;));
+System.out.println(&quot;Verschoben: &quot; +
+        (Files.notExists(file) &amp;&amp; Files.isRegularFile(target)));
+Files.delete(target);
+Files.delete(testDir);
+Files.delete(newDir);
+System.out.println(&quot;Gelöscht: &quot; + (Files.notExists(target)
+        &amp;&amp; Files.notExists(testDir) &amp;&amp; Files.notExists(newDir)));</pre>
+</div></article>
+<article><h3>3. Dateiinhalt lesen und ausgeben</h3><p>Lies die Datei <code>.gitignore</code> mit readAllLines in eine Liste ein und gib die Liste aus. Die Datei muss im Arbeitsverzeichnis vorhanden sein.</p><div class="task-actions"><button onclick="toggleSolution('files-hint-3')">Hinweis anzeigen</button><button onclick="toggleSolution('files-solution-3')">Lösung anzeigen</button></div><div class="solution" id="files-hint-3"><p>readAllLines liefert List&lt;String&gt;. Verwende println für die Liste oder forEach für einzelne Zeilen.</p></div><div class="solution" id="files-solution-3">
+<pre class="copyable">Path path = Path.of(&quot;.gitignore&quot;);
+List&lt;String&gt; lines = Files.readAllLines(path);
+System.out.println(lines);
+lines.forEach(System.out::println);</pre>
+</div></article>
+<article><h3>4. Datei mit FileVisitor suchen</h3><p>Implementiere FileVisitor und suche rekursiv nach einer Datei, z. B. FileSearchExample.java. Verwende Files.walkFileTree mit einem selbst gewählten Startverzeichnis. Gib bei Erfolg „File &lt;Datei&gt; gefunden“ aus, sonst „File &lt;Datei&gt; not found“.</p><div class="task-actions"><button onclick="toggleSolution('files-hint-4')">Hinweis anzeigen</button><button onclick="toggleSolution('files-solution-4')">Lösung anzeigen</button></div><div class="solution" id="files-hint-4"><p>Speichere den Suchnamen und ein boolean found. Vergleiche in visitFile den Dateinamen und beende bei einem Treffer mit TERMINATE. Prüfe found nach walkFileTree.</p></div><div class="solution" id="files-solution-4">
+<pre class="copyable">import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+
+public class FileSearchExample implements FileVisitor&lt;Path&gt; {
+    private final String fileToSearch;
+    private boolean found;
+
+    public FileSearchExample(String fileToSearch) {
+        this.fileToSearch = fileToSearch;
+    }
+
+    @Override
+    public FileVisitResult preVisitDirectory(Path dir,
+            BasicFileAttributes attrs) {
+        return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult visitFile(Path file,
+            BasicFileAttributes attrs) {
+        if (attrs.isRegularFile() &amp;&amp;
+                file.getFileName().toString().equals(fileToSearch)) {
+            found = true;
+            System.out.println(&quot;File &quot; + file + &quot; gefunden&quot;);
+            return FileVisitResult.TERMINATE;
+        }
+        return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult visitFileFailed(Path file,
+            IOException exc) throws IOException {
+        throw exc;
+    }
+
+    @Override
+    public FileVisitResult postVisitDirectory(Path dir,
+            IOException exc) throws IOException {
+        if (exc != null) throw exc;
+        return FileVisitResult.CONTINUE;
+    }
+
+    public static void main(String[] args) throws IOException {
+        Path startingDir = Path.of(&quot;.&quot;); // anpassen
+        String fileToSearch = &quot;FileSearchExample.java&quot;;
+        FileSearchExample crawler = new FileSearchExample(fileToSearch);
+        Files.walkFileTree(startingDir, crawler);
+        if (!crawler.found) {
+            System.out.println(&quot;File &quot; + fileToSearch + &quot; not found&quot;);
+        }
+    }
+}</pre>
+</div></article>
+<p>Bei einem Zugriffsfehler wird die IOException weitergegeben, damit eine unvollständige Suche nicht fälschlich als „not found“ ausgegeben wird. Als kürzere Variante kann die Klasse SimpleFileVisitor erweitert werden.</p>
+</section>
+</main><script src="script.js"></script></body></html>
