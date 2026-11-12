@@ -472,9 +472,8 @@ System.out.println(sums[0] + sums[1]); // Ergebnis nicht garantiert</pre>
                 <article>
                     <h3>2. Lager ohne Synchronisation</h3>
                     <p>
-                        Ein Produzent liefert, ein Konsument verkauft. Beide verwenden dieselbe Lagerinstanz
-                        mit Bestand 100 und maximal 15 Transaktionen. Beobachte mehrmals die Ausgaben und
-                        erkläre mögliche Fehler.
+                        Ein Produzent liefert - liefere(int anzahl), ein Konsument verkauft - verkaufe(int anzahl). Beide verwenden dieselbe Lagerinstanz
+                        mit Bestand 100 und maximal 15 Transaktionen - istOffen(). Beobachte mehrmals die Ausgaben und erkläre mögliche Fehler.
                     </p>
                     <div class="task-actions">
                         <button onclick="toggleSolution('hint-2')">Hinweis anzeigen</button>
