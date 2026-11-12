@@ -102,25 +102,85 @@ t.join(); // wartet auf das Ende des Virtual Threads</pre>
             </section>
             <section class="card" id="erzeugen">
                 <h2>Threads erzeugen</h2>
-                <h3>Thread erweitern oder Runnable implementieren</h3>
                 <p>
-                    Thread repräsentiert die Ausführung; Runnable beschreibt die Aufgabe (void run()).
-                    Runnable trennt Aufgabe und Ausführung und ist als funktionales Interface mit Lambda
-                    verwendbar.
+                    Es gibt zwei klassische Möglichkeiten, einen Platform Thread zu erstellen.
+                    Beide starten den Thread mit start().
                 </p>
-                <pre class="copyable">class HelloThread extends Thread {
+                <h3>Variante 1: Von Thread erben</h3>
+                <pre class="copyable">class MyThread extends Thread {
+
     @Override
     public void run() {
-        System.out.println(Thread.currentThread().getName());
+        System.out.println(&quot;Thread arbeitet&quot;);
     }
 }
-// In main:
-Thread a = new HelloThread();
-a.setName("A");
-a.start(); // A, Zeitpunkt nicht garantiert
-Runnable task = () -&gt; System.out.println("B");
-Thread b = new Thread(task, "B");
-b.start();</pre>
+
+public class Main {
+
+    public static void main(String[] args) {
+        MyThread t = new MyThread();
+        t.start();
+    }
+}</pre>
+                <p>
+                    MyThread erbt von Thread und überschreibt run(). Das Objekt t ist selbst ein Thread.
+                    start() startet den neuen Thread, der die überschriebene run()-Methode ausführt.
+                </p>
+                <p>
+                    Ausgabe: <code>Thread arbeitet</code>
+                </p>
+                <h3>Variante 2: Runnable implementieren</h3>
+                <pre class="copyable">class MyTask implements Runnable {
+
+    @Override
+    public void run() {
+        System.out.println(&quot;Thread arbeitet&quot;);
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+        MyTask task = new MyTask();
+
+        Thread t = new Thread(task);
+        t.start();
+    }
+}</pre>
+                <p>
+                    MyTask implementiert Runnable und beschreibt die Aufgabe. Ein Runnable ist selbst kein Thread.
+                    Deshalb wird task dem Konstruktor von Thread übergeben.
+                    start() startet den neuen Thread, der task.run() ausführt.
+                </p>
+                <p>
+                    Ausgabe: <code>Thread arbeitet</code>
+                </p>
+                <h3>Kurzform: Runnable mit Lambda</h3>
+                <pre class="copyable">public class Main {
+
+    public static void main(String[] args) {
+        Runnable task = () -&gt; {
+            System.out.println(&quot;Thread arbeitet&quot;);
+        };
+
+        Thread t = new Thread(task);
+        t.start();
+    }
+}</pre>
+                <p>
+                    Runnable ist ein funktionales Interface mit der abstrakten Methode void run().
+                    Deshalb kann die Aufgabe auch durch einen Lambda-Ausdruck beschrieben werden.
+                    Das ist eine Kurzform der zweiten Variante, keine neue Art der Thread-Erzeugung.
+                </p>
+                <p>
+                    Ausgabe: <code>Thread arbeitet</code>
+                </p>
+                <p>
+                    <strong>Vergleich:</strong> Runnable trennt die Aufgabe von ihrer Ausführung.
+                    Die Aufgabenklasse kann außerdem von einer anderen Klasse erben.
+                    Bei extends Thread ist die Vererbung bereits festgelegt.
+                    Daher wird Runnable häufig bevorzugt.
+                </p>
                 <h3>start() versus run()</h3>
                 <pre class="copyable">Thread t = new Thread(() -&gt;
     System.out.println(Thread.currentThread().getName()), "Worker");
